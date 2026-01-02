@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { useDropzone } from 'react-dropzone'
+import { useDropzone, type FileRejection } from 'react-dropzone'
 import { Upload, FileText, X, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -11,27 +11,40 @@ interface TDSUploadDropzoneProps {
   disabled?: boolean
 }
 
-export function TDSUploadDropzone({ onFileSelect, isUploading, disabled }: TDSUploadDropzoneProps) {
+export function TDSUploadDropzone({
+  onFileSelect,
+  isUploading,
+  disabled,
+}: TDSUploadDropzoneProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: { errors: { message: string }[] }[]) => {
-    setError(null)
+  const onDrop = useCallback(
+    (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+      setError(null)
 
-    if (rejectedFiles.length > 0) {
-      const firstError = rejectedFiles[0].errors[0]
-      setError(firstError?.message || 'Invalid file')
-      return
-    }
+      if (fileRejections.length > 0) {
+        const firstError = fileRejections[0]?.errors[0]
+        setError(firstError?.message || 'Invalid file')
+        return
+      }
 
-    if (acceptedFiles.length > 0) {
-      const file = acceptedFiles[0]
-      setSelectedFile(file)
-      onFileSelect(file)
-    }
-  }, [onFileSelect])
+      if (acceptedFiles.length > 0) {
+        const file = acceptedFiles[0]
+        setSelectedFile(file)
+        onFileSelect(file)
+      }
+    },
+    [onFileSelect]
+  )
 
-  const { getRootProps, getInputProps, isDragActive, isDragAccept, isDragReject } = useDropzone({
+  const {
+    getRootProps,
+    getInputProps,
+    isDragActive,
+    isDragAccept,
+    isDragReject,
+  } = useDropzone({
     onDrop,
     accept: { 'application/pdf': ['.pdf'] },
     maxFiles: 1,
@@ -54,7 +67,9 @@ export function TDSUploadDropzone({ onFileSelect, isUploading, disabled }: TDSUp
           isDragActive && 'border-blue-500 bg-blue-50',
           isDragAccept && 'border-green-500 bg-green-50',
           isDragReject && 'border-red-500 bg-red-50',
-          !isDragActive && !selectedFile && 'border-gray-300 hover:border-gray-400 hover:bg-gray-50',
+          !isDragActive &&
+            !selectedFile &&
+            'border-gray-300 hover:border-gray-400 hover:bg-gray-50',
           selectedFile && 'border-green-500 bg-green-50',
           (disabled || isUploading) && 'opacity-50 cursor-not-allowed',
           error && 'border-red-500 bg-red-50'
@@ -71,7 +86,9 @@ export function TDSUploadDropzone({ onFileSelect, isUploading, disabled }: TDSUp
           <div className="flex flex-col items-center gap-3">
             <FileText className="w-12 h-12 text-green-600" />
             <div className="flex items-center gap-2">
-              <span className="text-green-700 font-medium">{selectedFile.name}</span>
+              <span className="text-green-700 font-medium">
+                {selectedFile.name}
+              </span>
               <button
                 onClick={clearFile}
                 className="p-1 hover:bg-green-200 rounded-full transition-colors"
@@ -95,10 +112,22 @@ export function TDSUploadDropzone({ onFileSelect, isUploading, disabled }: TDSUp
               </>
             ) : (
               <>
-                <Upload className={cn('w-12 h-12', isDragActive ? 'text-blue-500' : 'text-gray-400')} />
+                <Upload
+                  className={cn(
+                    'w-12 h-12',
+                    isDragActive ? 'text-blue-500' : 'text-gray-400'
+                  )}
+                />
                 <div>
-                  <p className={cn('font-medium', isDragActive ? 'text-blue-600' : 'text-gray-700')}>
-                    {isDragActive ? 'Drop your TDS PDF here' : 'Drag & drop your TDS PDF here'}
+                  <p
+                    className={cn(
+                      'font-medium',
+                      isDragActive ? 'text-blue-600' : 'text-gray-700'
+                    )}
+                  >
+                    {isDragActive
+                      ? 'Drop your TDS PDF here'
+                      : 'Drag & drop your TDS PDF here'}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
                     or click to browse (max 10MB)
