@@ -58,3 +58,51 @@ export function convertTear(value: number, from: TearUnit): number {
 export const convertToMicrometers = convertThickness
 export const convertToKNPerMeter = convertTensile
 export const convertToMillinewtons = convertTear
+
+export type SmoothnessUnit = 'sec' | 'ml/min' | 'µm'
+export type SmoothnessMethod = 'Bekk' | 'Bendtsen' | 'PPS'
+export type StiffnessUnit = 'mN·m' | 'gf·cm' | 'mN·mm'
+
+const STIFFNESS_TO_MNM: Record<StiffnessUnit, number> = {
+  'mN·m': 1,
+  'gf·cm': 0.0981,
+  'mN·mm': 0.001,
+}
+
+export function convertStiffness(value: number, from: StiffnessUnit): number {
+  if (value < 0) {
+    throw new Error('Value must be non-negative')
+  }
+  const factor = STIFFNESS_TO_MNM[from]
+  if (factor === undefined) {
+    throw new Error(`Invalid stiffness unit: ${from}`)
+  }
+  return value * factor
+}
+
+export function bekkToPPS(bekkSeconds: number): number {
+  if (bekkSeconds <= 0) {
+    throw new Error('Bekk value must be positive')
+  }
+  return 18.65 / Math.pow(bekkSeconds, 1 / 3)
+}
+
+export function ppsToBekk(ppsUm: number): number {
+  if (ppsUm <= 0) {
+    throw new Error('PPS value must be positive')
+  }
+  return Math.pow(18.65 / ppsUm, 3)
+}
+
+export function getSmoothnessMethod(unit: SmoothnessUnit): SmoothnessMethod {
+  switch (unit) {
+    case 'sec':
+      return 'Bekk'
+    case 'ml/min':
+      return 'Bendtsen'
+    case 'µm':
+      return 'PPS'
+  }
+}
+
+export const convertToMNm = convertStiffness

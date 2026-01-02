@@ -3,9 +3,14 @@ import {
   convertThickness,
   convertTensile,
   convertTear,
+  convertStiffness,
+  bekkToPPS,
+  ppsToBekk,
+  getSmoothnessMethod,
   type ThicknessUnit,
   type TensileUnit,
   type TearUnit,
+  type StiffnessUnit,
 } from './unit-converters'
 
 describe('convertThickness (to µm)', () => {
@@ -181,5 +186,119 @@ describe('precision and rounding', () => {
     const gfValue = 32
     const expected = 32 * 9.80665
     expect(convertTear(gfValue, 'gf')).toBeCloseTo(expected, 2)
+  })
+})
+
+describe('convertStiffness (to mN·m)', () => {
+  describe('mN·m (identity)', () => {
+    it('returns same value for mN·m input', () => {
+      expect(convertStiffness(5.5, 'mN·m')).toBe(5.5)
+    })
+  })
+
+  describe('gf·cm to mN·m', () => {
+    it('converts 1 gf·cm to approximately 0.0981 mN·m', () => {
+      expect(convertStiffness(1, 'gf·cm')).toBeCloseTo(0.0981, 4)
+    })
+
+    it('converts 100 gf·cm to approximately 9.81 mN·m', () => {
+      expect(convertStiffness(100, 'gf·cm')).toBeCloseTo(9.81, 2)
+    })
+  })
+
+  describe('mN·mm to mN·m', () => {
+    it('converts 1000 mN·mm to 1 mN·m', () => {
+      expect(convertStiffness(1000, 'mN·mm')).toBeCloseTo(1, 5)
+    })
+
+    it('converts 1 mN·mm to 0.001 mN·m', () => {
+      expect(convertStiffness(1, 'mN·mm')).toBeCloseTo(0.001, 5)
+    })
+  })
+
+  describe('edge cases', () => {
+    it('handles zero', () => {
+      expect(convertStiffness(0, 'gf·cm')).toBe(0)
+    })
+
+    it('throws for negative values', () => {
+      expect(() => convertStiffness(-1, 'mN·m')).toThrow()
+    })
+
+    it('throws for invalid unit', () => {
+      expect(() => convertStiffness(1, 'invalid' as StiffnessUnit)).toThrow()
+    })
+  })
+})
+
+describe('smoothness conversions (Bekk ↔ PPS)', () => {
+  describe('bekkToPPS', () => {
+    it('converts 100 Bekk seconds to approximately 4.02 PPS µm', () => {
+      expect(bekkToPPS(100)).toBeCloseTo(4.02, 2)
+    })
+
+    it('converts 50 Bekk seconds to approximately 5.06 PPS µm', () => {
+      expect(bekkToPPS(50)).toBeCloseTo(5.06, 2)
+    })
+
+    it('converts 200 Bekk seconds to approximately 3.19 PPS µm', () => {
+      expect(bekkToPPS(200)).toBeCloseTo(3.19, 2)
+    })
+
+    it('throws for zero value', () => {
+      expect(() => bekkToPPS(0)).toThrow()
+    })
+
+    it('throws for negative value', () => {
+      expect(() => bekkToPPS(-10)).toThrow()
+    })
+  })
+
+  describe('ppsToBekk', () => {
+    it('converts 4.02 PPS µm to approximately 100 Bekk seconds', () => {
+      expect(ppsToBekk(4.02)).toBeCloseTo(100, 0)
+    })
+
+    it('converts 5.06 PPS µm to approximately 50 Bekk seconds', () => {
+      expect(ppsToBekk(5.06)).toBeCloseTo(50, 0)
+    })
+
+    it('throws for zero value', () => {
+      expect(() => ppsToBekk(0)).toThrow()
+    })
+
+    it('throws for negative value', () => {
+      expect(() => ppsToBekk(-5)).toThrow()
+    })
+  })
+
+  describe('round-trip conversion', () => {
+    it('Bekk → PPS → Bekk returns original value', () => {
+      const originalBekk = 75
+      const pps = bekkToPPS(originalBekk)
+      const backToBekk = ppsToBekk(pps)
+      expect(backToBekk).toBeCloseTo(originalBekk, 1)
+    })
+
+    it('PPS → Bekk → PPS returns original value', () => {
+      const originalPPS = 4.5
+      const bekk = ppsToBekk(originalPPS)
+      const backToPPS = bekkToPPS(bekk)
+      expect(backToPPS).toBeCloseTo(originalPPS, 2)
+    })
+  })
+})
+
+describe('getSmoothnessMethod', () => {
+  it('returns Bekk for sec unit', () => {
+    expect(getSmoothnessMethod('sec')).toBe('Bekk')
+  })
+
+  it('returns Bendtsen for ml/min unit', () => {
+    expect(getSmoothnessMethod('ml/min')).toBe('Bendtsen')
+  })
+
+  it('returns PPS for µm unit', () => {
+    expect(getSmoothnessMethod('µm')).toBe('PPS')
   })
 })

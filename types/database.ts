@@ -31,12 +31,10 @@ export interface ProductWithCategory extends Product {
   categories: Category | null
 }
 
-/**
- * All specs stored in standardized units:
- * - caliper: µm (micrometers)
- * - tensile_md/cd: kN/m (kilonewtons per meter)
- * - tear_md/cd: mN (millinewtons)
- */
+export type SmoothnessUnit = 'sec' | 'ml/min' | 'µm'
+export type SmoothnessMethod = 'Bekk' | 'Bendtsen' | 'PPS'
+export type StiffnessUnit = 'mN·m' | 'gf·cm' | 'mN·mm'
+
 export interface ProductSpec {
   id: string
   product_id: string
@@ -46,8 +44,46 @@ export interface ProductSpec {
   tensile_cd: number | null
   tear_md: number | null
   tear_cd: number | null
+  smoothness: number | null
+  smoothness_unit: SmoothnessUnit | null
+  stiffness_md: number | null
+  stiffness_cd: number | null
+  brightness: number | null
+  cobb_60: number | null
+  density: number | null
+  opacity: number | null
+  moisture: number | null
   extra_specs: Record<string, unknown>
   created_at: string
+}
+
+export type CategoryHint = 'Kraft' | 'Liner' | 'Medium' | 'UWF' | 'Board' | 'Specialty'
+
+export interface TDSParsedSpec {
+  gsm: number
+  caliper?: { value: number; unit: 'µm' | 'mm' | 'mil' }
+  tensile_md?: { value: number; unit: 'kN/m' | 'kgf/15mm' | 'N/15mm' }
+  tensile_cd?: { value: number; unit: 'kN/m' | 'kgf/15mm' | 'N/15mm' }
+  tear_md?: { value: number; unit: 'mN' | 'gf' }
+  tear_cd?: { value: number; unit: 'mN' | 'gf' }
+  smoothness?: { value: number; unit: SmoothnessUnit; method: SmoothnessMethod }
+  stiffness_md?: { value: number; unit: StiffnessUnit }
+  stiffness_cd?: { value: number; unit: StiffnessUnit }
+  brightness?: number
+  cobb_60?: number
+  density?: number
+  opacity?: number
+  moisture?: number
+  extra_specs?: Record<string, unknown>
+}
+
+export interface TDSParseResult {
+  mill_name: string
+  product_name: string
+  category_hint: CategoryHint
+  specs: TDSParsedSpec[]
+  test_standards?: string[]
+  notes?: string
 }
 
 export interface ProductWithSpecs extends Product {
@@ -104,4 +140,12 @@ export type Database = {
       }
     }
   }
+}
+
+export interface TDSProductFormData {
+  mill_name: string
+  product_name: string
+  category_id?: string
+  file_url: string
+  specs: TDSParsedSpec[]
 }

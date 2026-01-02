@@ -1,349 +1,198 @@
-# Paper Technical Data Manager (Chisan Paper) - Agent Guidelines
+# Agent Guidelines - Chisan Paper Manager
 
-This document provides coding standards, build commands, and TDD workflows for AI agents working on this Next.js 14 + Supabase project.
+Next.js 14 + Supabase + TypeScript project. Follow TDD strictly.
 
 ---
 
-## Build, Lint & Test Commands
+## Commands
 
-### Development
-```bash
-npm run dev                    # Start Next.js dev server (http://localhost:3000)
-npx supabase start            # Start local Supabase (required for DB access)
-npm run test                  # Run tests in watch mode
-npm run test:ui               # Run tests with Vitest UI
-```
+### Testing (PRIORITY)
 
-### Testing
 ```bash
-npm test                                        # Run all tests in watch mode
-npm test -- path/to/file.test.ts               # Run single test file
-npm test -- --run                              # Run once (no watch)
-npm test -- --coverage                         # Generate coverage report
-npm test -- utils/unit-converters.test.ts      # Run specific test (unit converters)
-vitest --reporter=verbose                      # Detailed test output
+npm test                              # All tests, watch mode
+npm test -- path/to/file.test.ts      # Single file (watch)
+npm test -- --run                     # All tests, run once (CI)
+npm test -- --run path/to/file.test.ts  # Single file, run once
+npm test -- --coverage                # Coverage report
+vitest --reporter=verbose             # Detailed output
 ```
 
 ### Build & Quality
+
 ```bash
-npm run build                 # Production build (must pass before deploy)
-npm run lint                  # ESLint check
-npm run format                # Format with Prettier
-npm run format:check          # Check formatting without writing
-npm run types:supabase        # Regenerate DB types from Supabase schema
+npm run build          # Production build (MUST pass before deploy)
+npm run lint           # ESLint check
+npm run format         # Format with Prettier
+npm run format:check   # Check formatting only
 ```
 
-### Database
+### Development
+
 ```bash
-npx supabase db reset         # Reset local DB (applies all migrations)
-npx supabase db push          # Push migrations to remote
-npx supabase migration new <name>  # Create new migration file
+npm run dev            # Next.js dev server (localhost:3000)
+npx supabase start     # Local Supabase (required for DB)
+npx supabase db reset  # Reset local DB (applies migrations)
+```
+
+### Type Generation
+
+```bash
+npm run types:supabase  # Regenerate types from Supabase schema
+# Run after ANY schema/migration change
 ```
 
 ---
 
-## CRITICAL: TDD Compliance
+## TDD Workflow (MANDATORY)
 
-**You MUST follow Test-Driven Development for all business logic.**
+**Write tests FIRST for all business logic.**
 
-### TDD Workflow (Red-Green-Refactor)
-1. **RED**: Write a failing test first
-   ```bash
-   npm test -- path/to/feature.test.ts
-   ```
-2. **GREEN**: Write minimal code to pass the test
-3. **REFACTOR**: Improve code while keeping tests green
+1. **RED**: Write failing test
+2. **GREEN**: Minimal code to pass
+3. **REFACTOR**: Improve while green
+
+```bash
+# TDD cycle
+npm test -- lib/validations/product.test.ts  # Watch specific file
+```
 
 ### Mandatory TDD for:
-- All utility functions (e.g., `utils/unit-converters.ts`)
-- Form validation logic (`schemas/*.ts`)
-- Server Actions data transformations
+
+- Utility functions (`utils/*.ts`)
+- Validation schemas (`lib/validations/*.ts`)
+- Data transformations in Server Actions
 - Business logic calculations
 
-### Example (Unit Conversion):
-```typescript
-// 1. Write test FIRST (utils/unit-converters.test.ts)
-it('converts mm to µm', () => {
-  expect(convertThickness(1, 'mm')).toBe(1000)
-})
+### Test file placement:
 
-// 2. Run test (should FAIL)
-npm test -- utils/unit-converters.test.ts
-
-// 3. Implement function (utils/unit-converters.ts)
-export function convertThickness(value: number, from: ThicknessUnit): number {
-  return value * THICKNESS_TO_MICRON[from]
-}
-
-// 4. Run test (should PASS)
 ```
+utils/unit-converters.ts
+utils/unit-converters.test.ts      # Same directory
 
-**DO NOT write implementation code before tests exist and fail.**
+lib/validations/product.ts
+lib/validations/product.test.ts    # Same directory
+```
 
 ---
 
-## Code Style Guidelines
+## Code Style
+
+### Formatting (Prettier)
+
+- No semicolons
+- Single quotes
+- 2-space indentation
+- Trailing commas (ES5)
+- 80 char line width
 
 ### TypeScript
-- **Strict Mode**: All code must pass `strict: true` TypeScript checks
-- **Explicit Types**: Avoid `any`; use `unknown` or proper types
-- **Type Imports**: Use `import type { ... }` for type-only imports
-- **Enums**: Prefer `as const` objects or union types over enums
 
-### Imports
+- `strict: true` - all code must pass
+- NO `any` - use `unknown` or proper types
+- NO `@ts-ignore` or `@ts-expect-error`
+- Use `import type { ... }` for type-only imports
+- Prefer `as const` objects over enums
+
+### Import Order
+
 ```typescript
-// Order: React -> Next.js -> External -> Internal (absolute) -> Relative
+// 1. React
 import { useState } from 'react'
+// 2. Next.js
 import { redirect } from 'next/navigation'
+// 3. External packages
 import { z } from 'zod'
+// 4. Internal (absolute paths)
 import { createClient } from '@/utils/supabase/server'
+// 5. Relative
 import { ProductForm } from './ProductForm'
 ```
 
 ### Naming Conventions
-| Type | Convention | Example |
-|------|------------|---------|
-| Components | PascalCase | `ProductForm.tsx` |
-| Utilities | camelCase | `unit-converters.ts` |
-| Server Actions | camelCase + verb | `createProduct`, `updateProduct` |
-| Types/Interfaces | PascalCase | `ProductFormData`, `ThicknessUnit` |
-| Constants | UPPER_SNAKE_CASE | `THICKNESS_TO_MICRON` |
+
+| Type             | Convention                        | Example                          |
+| ---------------- | --------------------------------- | -------------------------------- |
+| Components       | PascalCase                        | `ProductForm.tsx`                |
+| Utilities        | kebab-case file, camelCase export | `unit-converters.ts`             |
+| Server Actions   | verb prefix                       | `createProduct`, `updateProduct` |
+| Types/Interfaces | PascalCase                        | `ProductFormData`                |
+| Constants        | UPPER_SNAKE_CASE                  | `THICKNESS_TO_MICRON`            |
 
 ---
 
-## Next.js 14 App Router Patterns
+## Next.js Patterns
 
 ### Server vs Client Components
-**Default to Server Components.** Only use Client Components for:
+
+**Default to Server Components.** Use `'use client'` ONLY for:
+
 - State (`useState`, `useReducer`)
 - Effects (`useEffect`)
 - Browser APIs (`window`, `localStorage`)
-- Event handlers (`onClick`, `onChange`)
+- Event handlers
+
+### Async Params (Next.js 15 ready)
 
 ```typescript
-// Server Component (default)
-export default async function ProductsPage() {
-  const supabase = await createClient()
-  const { data } = await supabase.from('products').select('*')
-  return <ProductList products={data} />
-}
-
-// Client Component (only when needed)
-'use client'
-export function ProductForm() {
-  const [isLoading, setIsLoading] = useState(false)
-}
-```
-
-### Async APIs (Next.js 15 Compatibility)
-**Always await `params`, `searchParams`, `cookies()`, `headers()`**
-
-```typescript
-// Correct (Next.js 15 ready)
-export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+// Always await params and searchParams
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   const { id } = await params
 }
 ```
 
 ### Server Actions
-- Place in `actions.ts` files next to route
-- Always use `'use server'` directive
+
+- Place in `lib/actions/*.ts` or colocated `actions.ts`
+- Use `'use server'` directive at file top
 - Use `revalidatePath()` after mutations
-- Use `redirect()` for navigation after success
+- Use `redirect()` for post-success navigation
 
 ---
 
-## Supabase Integration
+## Supabase
 
 ### Client Separation
+
 ```typescript
-// Server Components, Server Actions, Route Handlers
+// Server (Components, Actions, Route Handlers)
 import { createClient } from '@/utils/supabase/server'
 const supabase = await createClient()
 
-// Client Components ('use client')
+// Client ('use client' files only)
 import { createClient } from '@/utils/supabase/client'
 const supabase = createClient()
 ```
 
 ### Type Safety
-```typescript
-import { Database } from '@/types/database.types'
-// Regenerate after schema changes: npm run types:supabase
-```
 
-### Row Level Security (RLS)
-- ALL tables MUST have RLS enabled
-- Use optimized pattern: `(select auth.uid()) = user_id`
+```typescript
+import type { Database } from '@/types/database'
+// Regenerate: npm run types:supabase
+```
 
 ---
 
-## Authentication & Authorization
+## Error Handling
 
-### Auth Provider
-- **Google OAuth** only (via Supabase Auth)
-- No email/password registration
-
-### User Roles
-| Role | Permissions |
-|------|-------------|
-| `admin` | Full CRUD on all data, manage categories, upload files |
-| `viewer` | Read-only access to products and comparisons |
-
-### Role Check Pattern
-```typescript
-// Server-side role check
-const { data: { user } } = await supabase.auth.getUser()
-const { data: profile } = await supabase
-  .from('profiles')
-  .select('role')
-  .eq('id', user.id)
-  .single()
-
-if (profile?.role !== 'admin') {
-  throw new Error('Unauthorized')
-}
-```
-
-### Protected Routes
-- All routes require authentication
-- Admin-only routes: `/products/new`, `/products/[id]/edit`, `/settings`
-- Viewer routes: `/products`, `/products/[id]`, `/products/compare`
-
----
-
-## File Upload
-
-### Configuration
-- **Storage**: Supabase Storage (bucket: `spec-sheets`)
-- **File Type**: PDF only
-- **Max Size**: 10MB
-- **Naming**: `{product_id}/{timestamp}_{original_filename}.pdf`
-
-### Upload Pattern
-```typescript
-// Client Component upload
-const file = event.target.files[0]
-if (file.size > 10 * 1024 * 1024) {
-  toast.error('File must be under 10MB')
-  return
-}
-if (file.type !== 'application/pdf') {
-  toast.error('Only PDF files allowed')
-  return
-}
-
-const { data, error } = await supabase.storage
-  .from('spec-sheets')
-  .upload(`${productId}/${Date.now()}_${file.name}`, file)
-```
-
-### Storage RLS
-- Authenticated users can read all files
-- Only admin can upload/delete files
-
----
-
-## Testing Standards
-
-### File Placement
-```
-utils/unit-converters.ts
-utils/unit-converters.test.ts          <- Same directory
-
-app/products/new/actions.ts
-app/products/new/__tests__/actions.test.ts  <- __tests__ folder
-```
-
-### Vitest Patterns
-```typescript
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-
-describe('Feature Name', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('should describe expected behavior', () => {
-    expect(actual).toBe(expected)
-  })
-})
-```
-
-### Coverage Thresholds
-- **Lines**: 80%
-- **Functions**: 80%
-
----
-
-## Project-Specific Rules
-
-### Unit Conversion Standards
-**All values MUST be stored in standardized units:**
-
-| Property | Storage Unit | Symbol |
-|----------|--------------|--------|
-| Thickness | micrometers | µm |
-| Tensile Strength | kilonewtons per meter | kN/m |
-| Tear Strength | millinewtons | mN |
+### Server Actions
 
 ```typescript
-import { convertThickness, convertTensile, convertTear } from '@/utils/unit-converters'
-const caliperInMicrons = convertThickness(1, 'mm') // 1000
-```
-
-**Note**: Conversion formulas are standardized in this project. When encountering unfamiliar units from different paper mills, consult with the team to add new conversion factors to the utility module.
-
-### Product Categories
-- **User-defined list** (not hardcoded)
-- Stored in `categories` table
-- Admin can add/edit/delete categories
-- Examples: Kraft, Corrugating Medium, Testliner, Coated, Specialty
-
-### Extra Specs (JSONB)
-- **Freeform structure** - admin can add any key-value pairs
-- Common properties: brightness, opacity, smoothness, porosity, moisture
-- UI should allow dynamic field addition/removal
-```typescript
-// Example extra_specs structure
-{
-  "brightness": { "value": 85, "unit": "%" },
-  "opacity": { "value": 92, "unit": "%" },
-  "smoothness": { "value": 150, "unit": "ml/min" }
-}
-```
-
-### Product Comparison
-- **Cross-mill comparison**: Can compare products from different mills
-- **Any category**: No restriction on comparing different categories
-- **Maximum 10 products** per comparison session
-- Comparison data displayed in table + Recharts visualization
-
-### Database Constraints
-| Field | Type | Constraint |
-|-------|------|------------|
-| gsm | INTEGER | > 0 |
-| caliper | FLOAT | > 0 (stored in µm) |
-| tensile_md/cd | FLOAT | >= 0, nullable (stored in kN/m) |
-| tear_md/cd | FLOAT | >= 0, nullable (stored in mN) |
-
-### Form Handling
-- Use `react-hook-form` + `@hookform/resolvers/zod`
-- Define schemas in `schemas/` directory
-- Show real-time converted values to users
-- **Manual entry only** - no bulk import or OCR
-
-### Error Handling
-```typescript
-// Server Actions - let errors propagate to error boundary
+// Let errors propagate to error boundary
 try {
   await supabase.from('products').insert(data)
 } catch (error) {
   console.error('Database error:', error)
-  throw error
+  throw error // Re-throw, don't swallow
 }
+```
 
-// Client Components - show user-friendly messages
+### Client Components
+
+```typescript
 try {
   await createProduct(data)
 } catch (error) {
@@ -351,75 +200,31 @@ try {
 }
 ```
 
----
+### Forbidden Patterns
 
-## File Organization
-
-```
-app/
-  (auth)/                   # Auth routes (login, callback)
-    login/
-      page.tsx
-    callback/
-      route.ts              # OAuth callback handler
-  (dashboard)/              # Protected routes with shared layout
-    products/
-      page.tsx              # Product list (viewer + admin)
-      new/
-        page.tsx            # Admin only
-        actions.ts
-        __tests__/
-      [id]/
-        page.tsx            # Product detail
-        edit/
-          page.tsx          # Admin only
-      compare/
-        page.tsx            # Comparison with Recharts
-    settings/
-      categories/
-        page.tsx            # Admin: manage categories
-    layout.tsx              # Auth check + navigation
-components/
-  ui/                       # shadcn components
-  ProductForm.tsx
-  ProductComparisonChart.tsx
-  FileUpload.tsx
-utils/
-  supabase/
-    server.ts
-    client.ts
-    middleware.ts           # Session refresh
-  unit-converters.ts
-  unit-converters.test.ts
-schemas/
-  product.schema.ts
-  category.schema.ts
-types/
-  database.types.ts         # Generated (don't edit manually)
-middleware.ts               # Root middleware for auth
-```
-
-### Database Tables
-```
-profiles        - id, role ('admin' | 'viewer'), created_at
-categories      - id, name, created_at
-products        - id, mill_name, name, category_id (FK), file_url, created_at
-product_specs   - id, product_id (FK), gsm, caliper, tensile_*, tear_*, extra_specs
-```
+- Empty catch blocks: `catch(e) {}`
+- Swallowing errors without logging
+- Type coercion with `as any`
 
 ---
 
 ## Pre-Commit Checklist
 
-- [ ] All tests pass (`npm test -- --run`)
-- [ ] Coverage thresholds met (`npm test -- --coverage`)
-- [ ] No linting errors (`npm run lint`)
-- [ ] Code is formatted (`npm run format:check`)
-- [ ] Types are up-to-date (`npm run types:supabase` if schema changed)
-- [ ] Build succeeds (`npm run build`)
+- [ ] Tests pass: `npm test -- --run`
+- [ ] Coverage met: `npm test -- --coverage` (80% lines/functions)
+- [ ] Lint clean: `npm run lint`
+- [ ] Formatted: `npm run format:check`
+- [ ] Build passes: `npm run build`
 
 ---
 
-**Last Updated**: 2025-12-31
-**Stack**: Next.js 14, Supabase (Auth + Storage + DB), Tailwind CSS, shadcn/ui, Recharts, Vitest
-**Auth**: Google OAuth | **Roles**: admin, viewer | **File Upload**: PDF, 10MB max
+## Quick Reference
+
+| Task                 | Command                            |
+| -------------------- | ---------------------------------- |
+| Run single test file | `npm test -- path/to/file.test.ts` |
+| Run tests once (CI)  | `npm test -- --run`                |
+| Type check           | `npx tsc --noEmit`                 |
+| Regenerate DB types  | `npm run types:supabase`           |
+
+**Stack**: Next.js 14, Supabase, Tailwind, shadcn/ui, Vitest, Zod
