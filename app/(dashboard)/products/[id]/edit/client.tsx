@@ -11,14 +11,17 @@ interface EditProductClientProps {
   categories: Category[]
 }
 
-export function EditProductClient({ product, categories }: EditProductClientProps) {
+export function EditProductClient({
+  product,
+  categories,
+}: EditProductClientProps) {
   const router = useRouter()
 
   const defaultValues: Partial<ProductFormData> = {
     mill_name: product.mill_name,
     name: product.name,
     category_id: product.category_id || undefined,
-    specs: product.product_specs.map(spec => ({
+    specs: product.product_specs.map((spec) => ({
       gsm: spec.gsm,
       caliper: spec.caliper,
       caliper_unit: 'µm',

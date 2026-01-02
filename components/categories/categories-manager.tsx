@@ -4,8 +4,15 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { categoryFormSchema, type CategoryFormData } from '@/lib/validations/product'
-import { createCategory, updateCategory, deleteCategory } from '@/lib/actions/product'
+import {
+  categoryFormSchema,
+  type CategoryFormData,
+} from '@/lib/validations/product'
+import {
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} from '@/lib/actions/product'
 import type { Category } from '@/types/database'
 import { Plus, Pencil, Trash2, X } from 'lucide-react'
 
@@ -14,7 +21,10 @@ interface CategoriesManagerProps {
   isAdmin: boolean
 }
 
-export function CategoriesManager({ categories, isAdmin }: CategoriesManagerProps) {
+export function CategoriesManager({
+  categories,
+  isAdmin,
+}: CategoriesManagerProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -62,21 +72,33 @@ export function CategoriesManager({ categories, isAdmin }: CategoriesManagerProp
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Name
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Description
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {categories.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-6 py-12 text-center text-gray-500">
+                <td
+                  colSpan={3}
+                  className="px-6 py-12 text-center text-gray-500"
+                >
                   No categories found.
                 </td>
               </tr>
             ) : (
               categories.map((category) => (
-                <tr key={category.id} className="hover:bg-gray-50 transition-colors">
+                <tr
+                  key={category.id}
+                  className="hover:bg-gray-50 transition-colors"
+                >
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {category.name}
                   </td>
@@ -207,7 +229,9 @@ function CategoryDialog({
               placeholder="Optional description..."
             />
             {errors.description && (
-              <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
+              <p className="mt-1 text-sm text-red-600">
+                {errors.description.message}
+              </p>
             )}
           </div>
 

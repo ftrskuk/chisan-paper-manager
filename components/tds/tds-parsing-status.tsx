@@ -4,7 +4,14 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { CheckCircle, XCircle, FileSearch, Upload, Save } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export type ParseStatus = 'idle' | 'uploading' | 'parsing' | 'preview' | 'saving' | 'complete' | 'error'
+export type ParseStatus =
+  | 'idle'
+  | 'uploading'
+  | 'parsing'
+  | 'preview'
+  | 'saving'
+  | 'complete'
+  | 'error'
 
 interface TDSParsingStatusProps {
   status: ParseStatus
@@ -19,7 +26,10 @@ const STEPS = [
   { key: 'saving', label: 'Save Product', icon: Save },
 ] as const
 
-function getStepStatus(stepKey: string, currentStatus: ParseStatus): 'pending' | 'active' | 'complete' | 'error' {
+function getStepStatus(
+  stepKey: string,
+  currentStatus: ParseStatus
+): 'pending' | 'active' | 'complete' | 'error' {
   const stepOrder = ['uploading', 'parsing', 'preview', 'saving', 'complete']
   const currentIndex = stepOrder.indexOf(currentStatus)
   const stepIndex = stepOrder.indexOf(stepKey)
@@ -36,7 +46,11 @@ function getStepStatus(stepKey: string, currentStatus: ParseStatus): 'pending' |
   return 'pending'
 }
 
-export function TDSParsingStatus({ status, error, onRetry }: TDSParsingStatusProps) {
+export function TDSParsingStatus({
+  status,
+  error,
+  onRetry,
+}: TDSParsingStatusProps) {
   if (status === 'idle') return null
 
   return (

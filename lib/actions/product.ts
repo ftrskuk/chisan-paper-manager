@@ -2,8 +2,17 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { requireAdmin, getUser } from '@/lib/auth'
-import { productFormSchema, categoryFormSchema, type ProductFormData, type CategoryFormData } from '@/lib/validations/product'
-import { convertToMicrometers, convertToKNPerMeter, convertToMillinewtons } from '@/utils/unit-converters'
+import {
+  productFormSchema,
+  categoryFormSchema,
+  type ProductFormData,
+  type CategoryFormData,
+} from '@/lib/validations/product'
+import {
+  convertToMicrometers,
+  convertToKNPerMeter,
+  convertToMillinewtons,
+} from '@/utils/unit-converters'
 import { revalidatePath } from 'next/cache'
 
 export async function createProduct(data: ProductFormData) {
@@ -27,14 +36,22 @@ export async function createProduct(data: ProductFormData) {
 
   if (productError) throw new Error(productError.message)
 
-  const specsToInsert = validated.specs.map(spec => ({
+  const specsToInsert = validated.specs.map((spec) => ({
     product_id: product.id,
     gsm: spec.gsm,
     caliper: convertToMicrometers(spec.caliper, spec.caliper_unit),
-    tensile_md: spec.tensile_md ? convertToKNPerMeter(spec.tensile_md, spec.tensile_unit) : null,
-    tensile_cd: spec.tensile_cd ? convertToKNPerMeter(spec.tensile_cd, spec.tensile_unit) : null,
-    tear_md: spec.tear_md ? convertToMillinewtons(spec.tear_md, spec.tear_unit) : null,
-    tear_cd: spec.tear_cd ? convertToMillinewtons(spec.tear_cd, spec.tear_unit) : null,
+    tensile_md: spec.tensile_md
+      ? convertToKNPerMeter(spec.tensile_md, spec.tensile_unit)
+      : null,
+    tensile_cd: spec.tensile_cd
+      ? convertToKNPerMeter(spec.tensile_cd, spec.tensile_unit)
+      : null,
+    tear_md: spec.tear_md
+      ? convertToMillinewtons(spec.tear_md, spec.tear_unit)
+      : null,
+    tear_cd: spec.tear_cd
+      ? convertToMillinewtons(spec.tear_cd, spec.tear_unit)
+      : null,
     extra_specs: spec.extra_specs,
   }))
 
@@ -69,14 +86,22 @@ export async function updateProduct(productId: string, data: ProductFormData) {
 
   await supabase.from('product_specs').delete().eq('product_id', productId)
 
-  const specsToInsert = validated.specs.map(spec => ({
+  const specsToInsert = validated.specs.map((spec) => ({
     product_id: productId,
     gsm: spec.gsm,
     caliper: convertToMicrometers(spec.caliper, spec.caliper_unit),
-    tensile_md: spec.tensile_md ? convertToKNPerMeter(spec.tensile_md, spec.tensile_unit) : null,
-    tensile_cd: spec.tensile_cd ? convertToKNPerMeter(spec.tensile_cd, spec.tensile_unit) : null,
-    tear_md: spec.tear_md ? convertToMillinewtons(spec.tear_md, spec.tear_unit) : null,
-    tear_cd: spec.tear_cd ? convertToMillinewtons(spec.tear_cd, spec.tear_unit) : null,
+    tensile_md: spec.tensile_md
+      ? convertToKNPerMeter(spec.tensile_md, spec.tensile_unit)
+      : null,
+    tensile_cd: spec.tensile_cd
+      ? convertToKNPerMeter(spec.tensile_cd, spec.tensile_unit)
+      : null,
+    tear_md: spec.tear_md
+      ? convertToMillinewtons(spec.tear_md, spec.tear_unit)
+      : null,
+    tear_cd: spec.tear_cd
+      ? convertToMillinewtons(spec.tear_cd, spec.tear_unit)
+      : null,
     extra_specs: spec.extra_specs,
   }))
 
@@ -94,10 +119,7 @@ export async function deleteProduct(productId: string) {
   await requireAdmin()
   const supabase = await createClient()
 
-  const { error } = await supabase
-    .from('products')
-    .delete()
-    .eq('id', productId)
+  const { error } = await supabase.from('products').delete().eq('id', productId)
 
   if (error) throw new Error(error.message)
 
@@ -109,11 +131,13 @@ export async function getProducts() {
 
   const { data, error } = await supabase
     .from('products')
-    .select(`
+    .select(
+      `
       *,
       categories (id, name),
       product_specs (*)
-    `)
+    `
+    )
     .order('created_at', { ascending: false })
 
   if (error) throw new Error(error.message)
@@ -163,11 +187,13 @@ export async function getProductsByIds(ids: string[]) {
 
   const { data, error } = await supabase
     .from('products')
-    .select(`
+    .select(
+      `
       *,
       categories (id, name),
       product_specs (*)
-    `)
+    `
+    )
     .in('id', ids)
 
   if (error) throw new Error(error.message)
@@ -179,11 +205,13 @@ export async function getProduct(id: string) {
 
   const { data, error } = await supabase
     .from('products')
-    .select(`
+    .select(
+      `
       *,
       categories (id, name),
       product_specs (*)
-    `)
+    `
+    )
     .eq('id', id)
     .single()
 
@@ -208,7 +236,8 @@ export async function getSpecsByIds(specIds: string[]) {
 
   const { data, error } = await supabase
     .from('product_specs')
-    .select(`
+    .select(
+      `
       *,
       products (
         id,
@@ -216,7 +245,8 @@ export async function getSpecsByIds(specIds: string[]) {
         name,
         categories (id, name)
       )
-    `)
+    `
+    )
     .in('id', specIds)
 
   if (error) throw new Error(error.message)

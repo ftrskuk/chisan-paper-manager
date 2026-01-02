@@ -10,7 +10,7 @@ function LoginContent() {
 
   const handleGoogleLogin = async () => {
     const supabase = createClient()
-    
+
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -72,14 +72,16 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <main className="flex min-h-screen flex-col items-center justify-center p-24">
-        <div className="w-full max-w-md text-center">
-          <h1 className="text-3xl font-bold">Chisan Paper Manager</h1>
-          <p className="mt-4 text-gray-500">Loading...</p>
-        </div>
-      </main>
-    }>
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen flex-col items-center justify-center p-24">
+          <div className="w-full max-w-md text-center">
+            <h1 className="text-3xl font-bold">Chisan Paper Manager</h1>
+            <p className="mt-4 text-gray-500">Loading...</p>
+          </div>
+        </main>
+      }
+    >
       <LoginContent />
     </Suspense>
   )

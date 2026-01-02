@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { productFormSchema, productSpecSchema } from './product'
+import { productFormSchema, productSpecSchema, tdsSpecSchema } from './product'
 
 describe('productSpecSchema', () => {
   it('validates valid spec with all fields', () => {
@@ -73,7 +73,7 @@ describe('productSpecSchema', () => {
 
   it('accepts all valid caliper units', () => {
     const units = ['µm', 'mm', 'mil', 'inch'] as const
-    units.forEach(unit => {
+    units.forEach((unit) => {
       const spec = {
         gsm: 100,
         caliper: 150,
@@ -102,7 +102,7 @@ describe('productSpecSchema', () => {
 
   it('accepts all valid tensile units', () => {
     const units = ['kN/m', 'kgf/15mm', 'N/15mm', 'lb/in'] as const
-    units.forEach(unit => {
+    units.forEach((unit) => {
       const spec = {
         gsm: 100,
         caliper: 150,
@@ -118,7 +118,7 @@ describe('productSpecSchema', () => {
 
   it('accepts all valid tear units', () => {
     const units = ['mN', 'gf', 'cN'] as const
-    units.forEach(unit => {
+    units.forEach((unit) => {
       const spec = {
         gsm: 100,
         caliper: 150,
@@ -252,5 +252,59 @@ describe('productFormSchema', () => {
       expect(result.data.mill_name).toBe('Test Mill')
       expect(result.data.name).toBe('Test Product')
     }
+  })
+})
+
+describe('tdsSpecSchema', () => {
+  it('validates valid tds spec with all fields', () => {
+    const validSpec = {
+      gsm: 100,
+      caliper: { value: 120, unit: 'µm' },
+      tensile_md: { value: 5.5, unit: 'kN/m' },
+      smoothness: { value: 20, unit: 'sec', method: 'Bekk' },
+      stiffness_md: { value: 10, unit: 'mN·m' },
+      brightness: 95,
+      opacity: 98,
+      moisture: 5.5,
+      density: 0.8,
+      cobb_60: 25,
+      extra_specs: {},
+    }
+    const result = tdsSpecSchema.safeParse(validSpec)
+    expect(result.success).toBe(true)
+  })
+
+  it('validates minimal tds spec (only GSM)', () => {
+    const minimalSpec = {
+      gsm: 100,
+    }
+    const result = tdsSpecSchema.safeParse(minimalSpec)
+    expect(result.success).toBe(true)
+  })
+
+  it('validates optional nested objects', () => {
+    const spec = {
+      gsm: 100,
+      smoothness: { value: 20, unit: 'sec', method: 'Bekk' },
+    }
+    const result = tdsSpecSchema.safeParse(spec)
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects invalid nested structure', () => {
+    const spec = {
+      gsm: 'invalid' as unknown as number,
+    }
+    const result = tdsSpecSchema.safeParse(spec)
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects invalid enum values', () => {
+    const spec = {
+      gsm: 100,
+      smoothness: { value: 20, unit: 'invalid', method: 'Bekk' },
+    }
+    const result = tdsSpecSchema.safeParse(spec)
+    expect(result.success).toBe(false)
   })
 })

@@ -15,11 +15,8 @@ import {
   getStorageUrl,
   deleteStorageFile,
 } from '@/lib/actions/tds-upload'
-import type {
-  Category,
-  TDSParseResult,
-  TDSProductFormData,
-} from '@/types/database'
+import type { Category, TDSParseResult } from '@/types/database'
+import type { TDSProductFormData } from '@/lib/validations/product'
 
 interface TDSUploadClientProps {
   categories: Category[]

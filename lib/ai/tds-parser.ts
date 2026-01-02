@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import Anthropic from '@anthropic-ai/sdk'
 import type {
   TDSParseResult,
   TDSParsedSpec,
@@ -8,9 +8,11 @@ import type {
   StiffnessUnit,
 } from '@/types/database'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY || '',
+})
 
-const EXTRACTION_PROMPT = `You are a paper industry expert. Extract technical specifications from this Technical Data Sheet (TDS) PDF.
+const EXTRACTION_PROMPT = `You are a paper industry expert. Extract technical specifications from this Technical Data Sheet (TDS) document.
 
 IMPORTANT RULES:
 1. Extract ALL GSM variants shown in the document as separate spec entries
@@ -29,6 +31,9 @@ IMPORTANT RULES:
 5. If a value is a range (e.g., "100-120"), use the midpoint
 6. If units are not specified, make a reasonable assumption based on value magnitude
 7. Category hints: Kraft (brown unbleached), Liner (for boxes), Medium (corrugating), UWF (uncoated white freesheet), Board (thick/rigid), Specialty (other)
+8. For fields like Brightness, Cobb60, Density, Opacity, Moisture:
+   - If not found in document, return null (do NOT make up values)
+   - Do NOT use strings like "-" or "N/A", use null
 
 Return a JSON object with this exact structure:
 {
@@ -63,42 +68,57 @@ ONLY return valid JSON, no markdown formatting.`
 export async function parseTDSDocument(
   pdfBase64: string
 ): Promise<TDSParseResult> {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY environment variable is not set')
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error('ANTHROPIC_API_KEY environment variable is not set')
   }
 
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash-preview-05-20',
-    generationConfig: {
-      responseMimeType: 'application/json',
-    },
+  const response = await anthropic.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 4096,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'document',
+            source: {
+              type: 'base64',
+              media_type: 'application/pdf',
+              data: pdfBase64,
+            },
+          },
+          {
+            type: 'text',
+            text: EXTRACTION_PROMPT,
+          },
+        ],
+      },
+    ],
   })
 
-  const result = await model.generateContent([
-    { text: EXTRACTION_PROMPT },
-    {
-      inlineData: {
-        mimeType: 'application/pdf',
-        data: pdfBase64,
-      },
-    },
-  ])
+  const textBlock = response.content.find((block) => block.type === 'text')
+  if (!textBlock || textBlock.type !== 'text') {
+    throw new Error('No text response from Claude')
+  }
 
-  const responseText = result.response.text()
+  const responseText = textBlock.text
   const parsed = JSON.parse(responseText)
-
   return validateAndNormalize(parsed)
 }
 
 function validateAndNormalize(raw: unknown): TDSParseResult {
   const data = raw as Record<string, unknown>
 
-  if (!data.mill_name || typeof data.mill_name !== 'string') {
-    throw new Error('Missing or invalid mill_name')
-  }
-  if (!data.product_name || typeof data.product_name !== 'string') {
-    throw new Error('Missing or invalid product_name')
-  }
+  // Handle missing mill/product name gracefully as requested
+  const mill_name =
+    typeof data.mill_name === 'string' && data.mill_name.length > 0
+      ? data.mill_name
+      : '-'
+  const product_name =
+    typeof data.product_name === 'string' && data.product_name.length > 0
+      ? data.product_name
+      : '-'
+
   if (!Array.isArray(data.specs) || data.specs.length === 0) {
     throw new Error('No specifications found in document')
   }
@@ -219,8 +239,8 @@ function validateAndNormalize(raw: unknown): TDSParseResult {
   )
 
   return {
-    mill_name: data.mill_name as string,
-    product_name: data.product_name as string,
+    mill_name,
+    product_name,
     category_hint: (data.category_hint as CategoryHint) || 'Specialty',
     specs,
     test_standards: Array.isArray(data.test_standards)
@@ -259,11 +279,7 @@ export async function parseTDSWithRetry(
       lastError = error instanceof Error ? error : new Error(String(error))
       const message = lastError.message.toLowerCase()
 
-      if (
-        message.includes('rate') ||
-        message.includes('429') ||
-        message.includes('quota')
-      ) {
+      if (message.includes('rate limit') || message.includes('429')) {
         if (attempt < maxRetries) {
           const delay = Math.pow(2, attempt) * 1000
           await new Promise((resolve) => setTimeout(resolve, delay))
@@ -276,11 +292,7 @@ export async function parseTDSWithRetry(
         )
       }
 
-      if (
-        message.includes('401') ||
-        message.includes('api key') ||
-        message.includes('unauthorized')
-      ) {
+      if (message.includes('401') || message.includes('api key')) {
         throw new TDSParseError(
           'Invalid API key configuration',
           'AUTH_ERROR',
@@ -289,9 +301,8 @@ export async function parseTDSWithRetry(
       }
 
       if (
-        message.includes('invalid') ||
-        message.includes('400') ||
-        message.includes('bad request')
+        message.includes('invalid pdf') ||
+        message.includes('could not process')
       ) {
         throw new TDSParseError(
           'Invalid PDF document or format',

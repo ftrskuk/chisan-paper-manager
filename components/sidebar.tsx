@@ -12,6 +12,7 @@ interface SidebarProps {
 const navItems = [
   { href: '/products', label: 'Products', adminOnly: false },
   { href: '/products/compare', label: 'Compare', adminOnly: false },
+  { href: '/products/upload', label: 'Upload TDS', adminOnly: true },
   { href: '/categories', label: 'Categories', adminOnly: true },
 ]
 
@@ -19,7 +20,7 @@ export function Sidebar({ profile }: SidebarProps) {
   const pathname = usePathname()
   const isAdmin = profile.role === 'admin'
 
-  const filteredItems = navItems.filter(item => !item.adminOnly || isAdmin)
+  const filteredItems = navItems.filter((item) => !item.adminOnly || isAdmin)
 
   return (
     <aside className="w-64 border-r bg-gray-50 min-h-screen p-4">
@@ -29,7 +30,7 @@ export function Sidebar({ profile }: SidebarProps) {
       </div>
 
       <nav className="space-y-1">
-        {filteredItems.map(item => (
+        {filteredItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}

@@ -8,6 +8,7 @@
 ## 1. Problem Statement
 
 TDS(Technical Data Sheet) documents from different paper mills have:
+
 - **Inconsistent key fields**: Each mill includes different properties
 - **Different formats**: Tables, layouts, languages (EN/KO/CN/JP)
 - **Various units**: Same property measured in different units
@@ -20,17 +21,19 @@ TDS(Technical Data Sheet) documents from different paper mills have:
 ## 2. Solution Overview
 
 ### Flow
+
 ```
-[PDF Drop] → [Storage Save] → [Gemini AI Parse] → [Preview Table] → [User Edit] → [Save]
+[PDF Drop] → [Storage Save] → [OpenAI GPT-4o Parse] → [Preview Table] → [User Edit] → [Save]
 ```
 
 ### Tech Stack
-| Component | Technology |
-|-----------|------------|
-| AI Parsing | **Gemini 2.5 Pro** (88% accuracy, best CJK support, ~$0.06-0.12/doc) |
-| PDF Storage | Supabase Storage (existing bucket) |
-| Frontend | React + editable table component |
-| Unit Conversion | Extended unit-converters.ts |
+
+| Component       | Technology                                                               |
+| --------------- | ------------------------------------------------------------------------ |
+| AI Parsing      | **Anthropic Claude 3.5 Sonnet (Vision)** (best for PDF tables & visuals) |
+| PDF Storage     | Supabase Storage (existing bucket)                                       |
+| Frontend        | React + editable table component                                         |
+| Unit Conversion | Extended unit-converters.ts                                              |
 
 ---
 
@@ -40,7 +43,7 @@ TDS(Technical Data Sheet) documents from different paper mills have:
 
 ```sql
 -- Add core spec fields (priority order)
-ALTER TABLE product_specs 
+ALTER TABLE product_specs
   ADD COLUMN smoothness FLOAT,
   ADD COLUMN smoothness_unit TEXT DEFAULT 'sec/Bekk',
   ADD COLUMN stiffness_md FLOAT,
@@ -60,6 +63,7 @@ CREATE INDEX idx_specs_smoothness ON product_specs(smoothness);
 ### Field Priority (Core Columns vs JSONB extra_specs)
 
 **Core Columns (frequently filtered/compared):**
+
 1. gsm (existing)
 2. caliper (existing)
 3. tensile_md/cd (existing)
@@ -73,6 +77,7 @@ CREATE INDEX idx_specs_smoothness ON product_specs(smoothness);
 11. moisture (NEW)
 
 **JSONB extra_specs (occasional use):**
+
 - cie_whiteness
 - ash_content
 - scott_bond
@@ -131,7 +136,11 @@ export interface TDSParsedSpec {
   tensile_cd?: { value: number; unit: 'kN/m' | 'kgf/15mm' | 'N/15mm' }
   tear_md?: { value: number; unit: 'mN' | 'gf' }
   tear_cd?: { value: number; unit: 'mN' | 'gf' }
-  smoothness?: { value: number; unit: 'sec' | 'ml/min' | 'μm'; method: SmoothnessMethod }
+  smoothness?: {
+    value: number
+    unit: 'sec' | 'ml/min' | 'μm'
+    method: SmoothnessMethod
+  }
   stiffness_md?: { value: number; unit: 'mN·m' }
   stiffness_cd?: { value: number; unit: 'mN·m' }
   brightness?: { value: number; unit: '%' }
@@ -148,16 +157,18 @@ export interface TDSParsedSpec {
 ## 5. Unit Conversion Standards
 
 ### Smoothness
-| Method | Unit | Direction | ISO Standard |
-|--------|------|-----------|--------------|
-| **Bekk** | seconds (s) | Higher = Smoother | ISO 5627 |
-| Bendtsen | ml/min | Lower = Smoother | ISO 8791-2 |
-| PPS | μm | Lower = Smoother | ISO 8791-4 |
+
+| Method   | Unit        | Direction         | ISO Standard |
+| -------- | ----------- | ----------------- | ------------ |
+| **Bekk** | seconds (s) | Higher = Smoother | ISO 5627     |
+| Bendtsen | ml/min      | Lower = Smoother  | ISO 8791-2   |
+| PPS      | μm          | Lower = Smoother  | ISO 8791-4   |
 
 **Conversion (Bekk ↔ PPS only):**
+
 ```typescript
 // Bekk to PPS
-PPS_μm = 18.65 / (Bekk_seconds ^ (1/3))
+PPS_μm = 18.65 / (Bekk_seconds ^ (1 / 3))
 
 // PPS to Bekk
 Bekk_seconds = (18.65 / PPS_μm) ^ 3
@@ -170,7 +181,7 @@ Bekk_seconds = (18.65 / PPS_μm) ^ 3
 ```typescript
 // Smoothness conversions
 export function bekkToPPS(bekkSeconds: number): number {
-  return 18.65 / Math.pow(bekkSeconds, 1/3)
+  return 18.65 / Math.pow(bekkSeconds, 1 / 3)
 }
 
 export function ppsToBekk(ppsUm: number): number {
@@ -186,18 +197,21 @@ const STIFFNESS_TO_MNM: Record<StiffnessUnit, number> = {
   'mN·mm': 0.001,
 }
 
-export function convertToStandardStiffness(value: number, unit: StiffnessUnit): number {
+export function convertToStandardStiffness(
+  value: number,
+  unit: StiffnessUnit
+): number {
   return value * STIFFNESS_TO_MNM[unit]
 }
 ```
 
 ---
 
-## 6. Gemini API Integration
+## 6. OpenAI API Integration
 
 ### File: `lib/ai/tds-parser.ts`
 
-```typescript
+````typescript
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { TDSParseResult } from '@/types/database'
 
@@ -245,9 +259,11 @@ Rules:
 7. Look for test method/standard references (ISO, JIS, TAPPI, etc.)
 `
 
-export async function parseTDSDocument(pdfBase64: string): Promise<TDSParseResult> {
+export async function parseTDSDocument(
+  pdfBase64: string
+): Promise<TDSParseResult> {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' })
-  
+
   const result = await model.generateContent([
     { text: TDS_PARSER_PROMPT },
     {
@@ -257,21 +273,22 @@ export async function parseTDSDocument(pdfBase64: string): Promise<TDSParseResul
       },
     },
   ])
-  
+
   const responseText = result.response.text()
-  
+
   // Extract JSON from response (may be wrapped in markdown code blocks)
-  const jsonMatch = responseText.match(/```json\n?([\s\S]*?)\n?```/) || 
-                    responseText.match(/\{[\s\S]*\}/)
-  
+  const jsonMatch =
+    responseText.match(/```json\n?([\s\S]*?)\n?```/) ||
+    responseText.match(/\{[\s\S]*\}/)
+
   if (!jsonMatch) {
     throw new Error('Failed to parse AI response as JSON')
   }
-  
+
   const parsed = JSON.parse(jsonMatch[1] || jsonMatch[0])
   return parsed as TDSParseResult
 }
-```
+````
 
 ---
 
@@ -280,16 +297,16 @@ export async function parseTDSDocument(pdfBase64: string): Promise<TDSParseResul
 ```
 lib/
   ├── ai/
-  │   └── tds-parser.ts              # Gemini API integration
+  │   └── tds-parser.ts              # OpenAI API integration
   ├── actions/
   │   └── tds-upload.ts              # Server Action for upload flow
-  
+
 components/
   ├── tds/
   │   ├── tds-upload-dropzone.tsx    # Drag-and-drop zone
   │   ├── tds-preview-table.tsx      # Editable preview table
   │   └── tds-parsing-status.tsx     # Loading/progress indicator
-  
+
 app/(dashboard)/
   └── products/
       └── upload/
@@ -357,36 +374,42 @@ utils/
 ## 9. Implementation Checklist
 
 ### Phase 1: Database & Types
+
 - [ ] Create migration `20260102000000_add_tds_fields.sql`
 - [ ] Run migration on local Supabase
 - [ ] Update `types/database.ts` with new fields and AI types
 - [ ] Regenerate Supabase types: `npm run types:supabase`
 
 ### Phase 2: Unit Converters
+
 - [ ] Add smoothness conversion functions (Bekk ↔ PPS)
 - [ ] Add stiffness conversion functions
 - [ ] Write tests for new converters
 - [ ] Run tests: `npm test -- utils/unit-converters.test.ts`
 
 ### Phase 3: AI Integration
-- [ ] Install Gemini SDK: `npm install @google/generative-ai`
+
+- [x] Install Anthropic SDK: `npm install @anthropic-ai/sdk`
 - [ ] Create `lib/ai/tds-parser.ts`
-- [ ] Add `GEMINI_API_KEY` to `.env.local`
+- [ ] Add `ANTHROPIC_API_KEY` to `.env.local`
 - [ ] Test with sample TDS PDFs
 
 ### Phase 4: Server Actions
+
 - [ ] Create `lib/actions/tds-upload.ts`
 - [ ] Implement PDF upload to Supabase Storage
 - [ ] Implement AI parsing call
 - [ ] Implement save parsed data to database
 
 ### Phase 5: UI Components
+
 - [ ] Create `components/tds/tds-upload-dropzone.tsx`
 - [ ] Create `components/tds/tds-preview-table.tsx` (editable)
 - [ ] Create `components/tds/tds-parsing-status.tsx`
 - [ ] Create `app/(dashboard)/products/upload/page.tsx`
 
 ### Phase 6: Testing & Polish
+
 - [ ] Test with various TDS formats (see sample PDFs)
 - [ ] Handle edge cases (missing fields, unusual formats)
 - [ ] Add loading states and error handling
@@ -399,48 +422,51 @@ utils/
 
 Location: `C:\Users\david\Downloads\drive-download-20260102T042428Z-3-001`
 
-| File | Type | Language | Complexity |
-|------|------|----------|------------|
-| 20200917_SNP_TDS_MGP (2).pdf | MG Kraft | EN | Simple table |
-| Hokuetsu Kinmari V TDS.pdf | UWF | EN/JP | Multi-column |
-| MONDI MG KRAFT_RIBBED KRAFT.pdf | MG Kraft | EN | Standard EU format |
-| GoldEast UWK TDS.pdf | UWK | EN/CN | Tolerance values |
-| 전주제지_에코_하이_크라프트_TDS.pdf | Kraft | KO | Korean format |
-| VISY KRAFT LINER TECHNICAL DATA.PDF | Liner | EN | LTL/UTL ranges |
-| General Packaging Board.pdf | Board | EN | Multi-layer structure |
-| THERMAL 62GSM LT 48062.pdf | Thermal | EN | Special properties |
+| File                                  | Type     | Language | Complexity            |
+| ------------------------------------- | -------- | -------- | --------------------- |
+| 20200917_SNP_TDS_MGP (2).pdf          | MG Kraft | EN       | Simple table          |
+| Hokuetsu Kinmari V TDS.pdf            | UWF      | EN/JP    | Multi-column          |
+| MONDI MG KRAFT_RIBBED KRAFT.pdf       | MG Kraft | EN       | Standard EU format    |
+| GoldEast UWK TDS.pdf                  | UWK      | EN/CN    | Tolerance values      |
+| 전주제지*에코*하이\_크라프트\_TDS.pdf | Kraft    | KO       | Korean format         |
+| VISY KRAFT LINER TECHNICAL DATA.PDF   | Liner    | EN       | LTL/UTL ranges        |
+| General Packaging Board.pdf           | Board    | EN       | Multi-layer structure |
+| THERMAL 62GSM LT 48062.pdf            | Thermal  | EN       | Special properties    |
 
 ---
 
 ## 11. Environment Variables
 
 Add to `.env.local`:
+
 ```
-GEMINI_API_KEY=your_gemini_api_key_here
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
 ```
 
-Get key from: https://aistudio.google.com/app/apikey
+Get key from: https://console.anthropic.com/
 
 ---
 
 ## 12. Cost Estimate
 
-| Item | Cost |
-|------|------|
-| Gemini 2.5 Pro per TDS | ~$0.06-0.12 |
-| 200 TDS documents | ~$12-24 total |
-| Supabase Storage | Included in plan |
+| Item                  | Cost             |
+| --------------------- | ---------------- |
+| Claude Vision per TDS | ~$0.01-0.03      |
+| 200 TDS documents     | ~$2-6 total      |
+| Supabase Storage      | Included in plan |
 
 ---
 
 ## 13. References
 
 ### AI Service Research Summary
-- **Gemini 2.5 Pro**: 88% accuracy, best CJK support, lowest hallucination
+
+- **OpenAI GPT-4o**: High accuracy, good CJK support, structured JSON output
+- **Gemini 2.5 Pro**: 88% accuracy, best CJK support (alternative option)
 - **Claude Sonnet 4.5**: 78% accuracy, best structure understanding (backup option)
-- **Azure Document AI**: 87-93% but 10-100x more expensive
 
 ### Smoothness Standards
+
 - **ISO 5627**: Bekk method (primary smoothness standard)
 - **ISO 8791-2**: Bendtsen method
 - **ISO 8791-4**: PPS method
@@ -457,6 +483,6 @@ cat docs/TDS_UPLOAD_PLAN.md
 # 2. Start with Phase 1
 # Create migration file, update types
 
-# 3. Get Gemini API key
-# https://aistudio.google.com/app/apikey
+# 3. Get OpenAI API key
+# https://platform.openai.com/api-keys
 ```

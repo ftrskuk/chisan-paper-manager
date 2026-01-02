@@ -8,8 +8,14 @@ export const productSpecSchema = z.object({
   gsm: z.number().positive('GSM must be positive'),
   caliper: z.number().positive('Caliper must be positive'),
   caliper_unit: thicknessUnitSchema,
-  tensile_md: z.number().nonnegative('Tensile MD cannot be negative').optional(),
-  tensile_cd: z.number().nonnegative('Tensile CD cannot be negative').optional(),
+  tensile_md: z
+    .number()
+    .nonnegative('Tensile MD cannot be negative')
+    .optional(),
+  tensile_cd: z
+    .number()
+    .nonnegative('Tensile CD cannot be negative')
+    .optional(),
   tensile_unit: tensileUnitSchema,
   tear_md: z.number().nonnegative('Tear MD cannot be negative').optional(),
   tear_cd: z.number().nonnegative('Tear CD cannot be negative').optional(),
@@ -38,46 +44,37 @@ export const smoothnessUnitSchema = z.enum(['sec', 'ml/min', 'µm'])
 export const smoothnessMethodSchema = z.enum(['Bekk', 'Bendtsen', 'PPS'])
 export const stiffnessUnitSchema = z.enum(['mN·m', 'gf·cm', 'mN·mm'])
 
+const valueUnitSchema = <T extends readonly [string, ...string[]]>(units: T) =>
+  z
+    .object({
+      value: z.number().nullable(),
+      unit: z.enum(units).nullable(),
+    })
+    .nullable()
+    .optional()
+
 export const tdsSpecSchema = z.object({
   gsm: z.number().positive('GSM must be positive'),
-  caliper: z.object({
-    value: z.number().positive(),
-    unit: z.enum(['µm', 'mm', 'mil']),
-  }).optional(),
-  tensile_md: z.object({
-    value: z.number().nonnegative(),
-    unit: z.enum(['kN/m', 'kgf/15mm', 'N/15mm']),
-  }).optional(),
-  tensile_cd: z.object({
-    value: z.number().nonnegative(),
-    unit: z.enum(['kN/m', 'kgf/15mm', 'N/15mm']),
-  }).optional(),
-  tear_md: z.object({
-    value: z.number().nonnegative(),
-    unit: z.enum(['mN', 'gf']),
-  }).optional(),
-  tear_cd: z.object({
-    value: z.number().nonnegative(),
-    unit: z.enum(['mN', 'gf']),
-  }).optional(),
-  smoothness: z.object({
-    value: z.number().positive(),
-    unit: smoothnessUnitSchema,
-    method: smoothnessMethodSchema,
-  }).optional(),
-  stiffness_md: z.object({
-    value: z.number().nonnegative(),
-    unit: stiffnessUnitSchema,
-  }).optional(),
-  stiffness_cd: z.object({
-    value: z.number().nonnegative(),
-    unit: stiffnessUnitSchema,
-  }).optional(),
-  brightness: z.number().min(0).max(100).optional(),
-  cobb_60: z.number().nonnegative().optional(),
-  density: z.number().positive().optional(),
-  opacity: z.number().min(0).max(100).optional(),
-  moisture: z.number().min(0).max(100).optional(),
+  caliper: valueUnitSchema(['µm', 'mm', 'mil'] as const),
+  tensile_md: valueUnitSchema(['kN/m', 'kgf/15mm', 'N/15mm'] as const),
+  tensile_cd: valueUnitSchema(['kN/m', 'kgf/15mm', 'N/15mm'] as const),
+  tear_md: valueUnitSchema(['mN', 'gf'] as const),
+  tear_cd: valueUnitSchema(['mN', 'gf'] as const),
+  smoothness: z
+    .object({
+      value: z.number().nullable(),
+      unit: smoothnessUnitSchema.nullable(),
+      method: smoothnessMethodSchema.nullable(),
+    })
+    .nullable()
+    .optional(),
+  stiffness_md: valueUnitSchema(['mN·m', 'gf·cm', 'mN·mm'] as const),
+  stiffness_cd: valueUnitSchema(['mN·m', 'gf·cm', 'mN·mm'] as const),
+  brightness: z.number().min(0).max(100).nullable().optional(),
+  cobb_60: z.number().nonnegative().nullable().optional(),
+  density: z.number().positive().nullable().optional(),
+  opacity: z.number().min(0).max(100).nullable().optional(),
+  moisture: z.number().min(0).max(100).nullable().optional(),
   extra_specs: z.record(z.unknown()).optional(),
 })
 

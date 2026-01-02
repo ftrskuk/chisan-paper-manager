@@ -14,11 +14,10 @@ export default async function ComparePage({
     return (
       <div className="max-w-7xl mx-auto py-8 px-4 text-center">
         <h1 className="text-2xl font-bold mb-4">No specs selected</h1>
-        <p className="text-gray-500 mb-6">Please select product specs to compare from the list.</p>
-        <Link
-          href="/products"
-          className="text-blue-600 hover:underline"
-        >
+        <p className="text-gray-500 mb-6">
+          Please select product specs to compare from the list.
+        </p>
+        <Link href="/products" className="text-blue-600 hover:underline">
           Back to Products
         </Link>
       </div>

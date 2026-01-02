@@ -2,7 +2,11 @@ import { getProduct, getCategories } from '@/lib/actions/product'
 import { requireAdmin } from '@/lib/auth'
 import { EditProductClient } from './client'
 
-export default async function EditProductPage({ params }: { params: { id: string } }) {
+export default async function EditProductPage({
+  params,
+}: {
+  params: { id: string }
+}) {
   await requireAdmin()
 
   const [product, categories] = await Promise.all([

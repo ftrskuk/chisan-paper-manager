@@ -50,19 +50,29 @@ export function ComparisonCharts({ specs }: ComparisonChartsProps) {
         <h3 className="text-lg font-semibold mb-6">Caliper (µm)</h3>
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+            <BarChart
+              data={data}
+              margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+            >
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis 
-                dataKey="name" 
+              <XAxis
+                dataKey="name"
                 textAnchor="middle"
-                height={60} 
+                height={60}
                 interval={0}
                 tick={{ fontSize: 11 }}
               />
-              <YAxis label={{ value: 'µm', angle: -90, position: 'insideLeft' }} />
+              <YAxis
+                label={{ value: 'µm', angle: -90, position: 'insideLeft' }}
+              />
               <Tooltip />
               <Legend verticalAlign="top" />
-              <Bar dataKey="caliper" name="Caliper" fill="#2563eb" radius={[4, 4, 0, 0]} />
+              <Bar
+                dataKey="caliper"
+                name="Caliper"
+                fill="#2563eb"
+                radius={[4, 4, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -72,20 +82,35 @@ export function ComparisonCharts({ specs }: ComparisonChartsProps) {
         <h3 className="text-lg font-semibold mb-6">Tensile Strength (kN/m)</h3>
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+            <BarChart
+              data={data}
+              margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+            >
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis 
-                dataKey="name" 
+              <XAxis
+                dataKey="name"
                 textAnchor="middle"
-                height={60} 
+                height={60}
                 interval={0}
                 tick={{ fontSize: 11 }}
               />
-              <YAxis label={{ value: 'kN/m', angle: -90, position: 'insideLeft' }} />
+              <YAxis
+                label={{ value: 'kN/m', angle: -90, position: 'insideLeft' }}
+              />
               <Tooltip />
               <Legend verticalAlign="top" />
-              <Bar dataKey="tensile_md" name="MD" fill="#059669" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="tensile_cd" name="CD" fill="#10b981" radius={[4, 4, 0, 0]} />
+              <Bar
+                dataKey="tensile_md"
+                name="MD"
+                fill="#059669"
+                radius={[4, 4, 0, 0]}
+              />
+              <Bar
+                dataKey="tensile_cd"
+                name="CD"
+                fill="#10b981"
+                radius={[4, 4, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -95,20 +120,35 @@ export function ComparisonCharts({ specs }: ComparisonChartsProps) {
         <h3 className="text-lg font-semibold mb-6">Tear Strength (mN)</h3>
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+            <BarChart
+              data={data}
+              margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+            >
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis 
-                dataKey="name" 
+              <XAxis
+                dataKey="name"
                 textAnchor="middle"
-                height={60} 
+                height={60}
                 interval={0}
                 tick={{ fontSize: 11 }}
               />
-              <YAxis label={{ value: 'mN', angle: -90, position: 'insideLeft' }} />
+              <YAxis
+                label={{ value: 'mN', angle: -90, position: 'insideLeft' }}
+              />
               <Tooltip />
               <Legend verticalAlign="top" />
-              <Bar dataKey="tear_md" name="MD" fill="#7c3aed" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="tear_cd" name="CD" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+              <Bar
+                dataKey="tear_md"
+                name="MD"
+                fill="#7c3aed"
+                radius={[4, 4, 0, 0]}
+              />
+              <Bar
+                dataKey="tear_cd"
+                name="CD"
+                fill="#8b5cf6"
+                radius={[4, 4, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>

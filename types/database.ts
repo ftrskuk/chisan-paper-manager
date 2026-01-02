@@ -57,23 +57,54 @@ export interface ProductSpec {
   created_at: string
 }
 
-export type CategoryHint = 'Kraft' | 'Liner' | 'Medium' | 'UWF' | 'Board' | 'Specialty'
+export type CategoryHint =
+  | 'Kraft'
+  | 'Liner'
+  | 'Medium'
+  | 'UWF'
+  | 'Board'
+  | 'Specialty'
 
 export interface TDSParsedSpec {
   gsm: number
-  caliper?: { value: number; unit: 'µm' | 'mm' | 'mil' }
-  tensile_md?: { value: number; unit: 'kN/m' | 'kgf/15mm' | 'N/15mm' }
-  tensile_cd?: { value: number; unit: 'kN/m' | 'kgf/15mm' | 'N/15mm' }
-  tear_md?: { value: number; unit: 'mN' | 'gf' }
-  tear_cd?: { value: number; unit: 'mN' | 'gf' }
-  smoothness?: { value: number; unit: SmoothnessUnit; method: SmoothnessMethod }
-  stiffness_md?: { value: number; unit: StiffnessUnit }
-  stiffness_cd?: { value: number; unit: StiffnessUnit }
-  brightness?: number
-  cobb_60?: number
-  density?: number
-  opacity?: number
-  moisture?: number
+  caliper?: {
+    value: number | null
+    unit: 'µm' | 'mm' | 'mil' | null
+  } | null
+  tensile_md?: {
+    value: number | null
+    unit: 'kN/m' | 'kgf/15mm' | 'N/15mm' | null
+  } | null
+  tensile_cd?: {
+    value: number | null
+    unit: 'kN/m' | 'kgf/15mm' | 'N/15mm' | null
+  } | null
+  tear_md?: {
+    value: number | null
+    unit: 'mN' | 'gf' | null
+  } | null
+  tear_cd?: {
+    value: number | null
+    unit: 'mN' | 'gf' | null
+  } | null
+  smoothness?: {
+    value: number | null
+    unit: SmoothnessUnit | null
+    method: SmoothnessMethod | null
+  } | null
+  stiffness_md?: {
+    value: number | null
+    unit: StiffnessUnit | null
+  } | null
+  stiffness_cd?: {
+    value: number | null
+    unit: StiffnessUnit | null
+  } | null
+  brightness?: number | null
+  cobb_60?: number | null
+  density?: number | null
+  opacity?: number | null
+  moisture?: number | null
   extra_specs?: Record<string, unknown>
 }
 
@@ -140,12 +171,4 @@ export type Database = {
       }
     }
   }
-}
-
-export interface TDSProductFormData {
-  mill_name: string
-  product_name: string
-  category_id?: string
-  file_url: string
-  specs: TDSParsedSpec[]
 }

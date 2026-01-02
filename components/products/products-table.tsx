@@ -25,18 +25,25 @@ type SelectedSpec = {
 
 export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
   const router = useRouter()
-  const [selectedSpecs, setSelectedSpecs] = useState<Map<string, SelectedSpec>>(new Map())
-  const [expandedProductId, setExpandedProductId] = useState<string | null>(null)
+  const [selectedSpecs, setSelectedSpecs] = useState<Map<string, SelectedSpec>>(
+    new Map()
+  )
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(
+    null
+  )
   const [deleting, setDeleting] = useState<string | null>(null)
 
   const toggleExpand = (productId: string) => {
-    setExpandedProductId(prev => prev === productId ? null : productId)
+    setExpandedProductId((prev) => (prev === productId ? null : productId))
   }
 
-  const toggleSpecSelection = (product: ProductWithRelations, spec: ProductSpec) => {
+  const toggleSpecSelection = (
+    product: ProductWithRelations,
+    spec: ProductSpec
+  ) => {
     const key = spec.id
     const newSelected = new Map(selectedSpecs)
-    
+
     if (newSelected.has(key)) {
       newSelected.delete(key)
     } else if (newSelected.size < 10) {
@@ -44,7 +51,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
         productId: product.id,
         specId: spec.id,
         gsm: spec.gsm,
-        label: `${product.mill_name} ${product.name} ${spec.gsm}g`
+        label: `${product.mill_name} ${product.name} ${spec.gsm}g`,
       })
     }
     setSelectedSpecs(newSelected)
@@ -53,7 +60,9 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
   const isSpecSelected = (specId: string) => selectedSpecs.has(specId)
 
   const getSelectedCountForProduct = (productId: string) => {
-    return Array.from(selectedSpecs.values()).filter(s => s.productId === productId).length
+    return Array.from(selectedSpecs.values()).filter(
+      (s) => s.productId === productId
+    ).length
   }
 
   const handleDelete = async (id: string) => {
@@ -85,7 +94,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
 
   const getGsmRange = (specs: ProductSpec[]) => {
     if (!specs.length) return '-'
-    const gsms = specs.map(s => s.gsm).sort((a, b) => a - b)
+    const gsms = specs.map((s) => s.gsm).sort((a, b) => a - b)
     if (gsms.length === 1) return `${gsms[0]}g`
     return `${gsms[0]} - ${gsms[gsms.length - 1]}g`
   }
@@ -96,7 +105,8 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
         <div className="mb-4 p-3 bg-blue-50 rounded-md">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-blue-800 font-medium">
-              {selectedSpecs.size} spec{selectedSpecs.size > 1 ? 's' : ''} selected
+              {selectedSpecs.size} spec{selectedSpecs.size > 1 ? 's' : ''}{' '}
+              selected
             </span>
             <div className="flex gap-2">
               <button
@@ -114,7 +124,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
             </div>
           </div>
           <div className="flex flex-wrap gap-1">
-            {Array.from(selectedSpecs.values()).map(spec => (
+            {Array.from(selectedSpecs.values()).map((spec) => (
               <span
                 key={spec.specId}
                 className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded"
@@ -151,10 +161,10 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
             </tr>
           </thead>
           <tbody>
-            {products.map(product => {
+            {products.map((product) => {
               const selectedCount = getSelectedCountForProduct(product.id)
               const isExpanded = expandedProductId === product.id
-              
+
               return (
                 <>
                   <tr key={product.id} className="border-b hover:bg-gray-50">
@@ -208,7 +218,9 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                               disabled={deleting === product.id}
                               className="text-sm text-red-600 hover:text-red-800 disabled:text-gray-400"
                             >
-                              {deleting === product.id ? 'Deleting...' : 'Delete'}
+                              {deleting === product.id
+                                ? 'Deleting...'
+                                : 'Delete'}
                             </button>
                           </>
                         )}
@@ -218,11 +230,13 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                   {isExpanded && (
                     <tr key={`${product.id}-specs`} className="bg-gray-50">
                       <td colSpan={6} className="p-3 pl-12">
-                        <div className="text-sm text-gray-600 mb-2">Select GSM to compare:</div>
+                        <div className="text-sm text-gray-600 mb-2">
+                          Select GSM to compare:
+                        </div>
                         <div className="flex flex-wrap gap-2">
                           {product.product_specs
                             .sort((a, b) => a.gsm - b.gsm)
-                            .map(spec => (
+                            .map((spec) => (
                               <label
                                 key={spec.id}
                                 className={`inline-flex items-center px-3 py-1.5 rounded border cursor-pointer transition-colors ${
@@ -234,8 +248,13 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                                 <input
                                   type="checkbox"
                                   checked={isSpecSelected(spec.id)}
-                                  onChange={() => toggleSpecSelection(product, spec)}
-                                  disabled={selectedSpecs.size >= 10 && !isSpecSelected(spec.id)}
+                                  onChange={() =>
+                                    toggleSpecSelection(product, spec)
+                                  }
+                                  disabled={
+                                    selectedSpecs.size >= 10 &&
+                                    !isSpecSelected(spec.id)
+                                  }
                                   className="mr-2"
                                 />
                                 {spec.gsm}g

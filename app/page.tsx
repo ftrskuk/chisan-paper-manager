@@ -3,7 +3,7 @@ import { getUser } from '@/lib/auth'
 
 export default async function HomePage() {
   const user = await getUser()
-  
+
   if (user) {
     redirect('/products')
   } else {
