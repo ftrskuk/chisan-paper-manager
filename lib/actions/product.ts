@@ -29,7 +29,9 @@ export async function createProduct(data: ProductFormData) {
     .select()
     .single()
 
-  if (productError) throw new Error(productError.message)
+  if (productError) {
+    throw new Error(productError.message, { cause: productError })
+  }
 
   const specsToInsert = validated.specs.map((spec) => ({
     product_id: product.id,
@@ -48,7 +50,7 @@ export async function createProduct(data: ProductFormData) {
 
   if (specsError) {
     await supabase.from('products').delete().eq('id', product.id)
-    throw new Error(specsError.message)
+    throw new Error(specsError.message, { cause: specsError })
   }
 
   revalidatePath('/products')
@@ -69,7 +71,9 @@ export async function updateProduct(productId: string, data: ProductFormData) {
     })
     .eq('id', productId)
 
-  if (productError) throw new Error(productError.message)
+  if (productError) {
+    throw new Error(productError.message, { cause: productError })
+  }
 
   await supabase.from('product_specs').delete().eq('product_id', productId)
 
@@ -88,7 +92,9 @@ export async function updateProduct(productId: string, data: ProductFormData) {
     .from('product_specs')
     .insert(specsToInsert)
 
-  if (specsError) throw new Error(specsError.message)
+  if (specsError) {
+    throw new Error(specsError.message, { cause: specsError })
+  }
 
   revalidatePath('/products')
   revalidatePath(`/products/${productId}`)
@@ -100,7 +106,9 @@ export async function deleteProduct(productId: string) {
 
   const { error } = await supabase.from('products').delete().eq('id', productId)
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    throw new Error(error.message, { cause: error })
+  }
 
   revalidatePath('/products')
 }
@@ -119,7 +127,9 @@ export async function getProducts() {
     )
     .order('created_at', { ascending: false })
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    throw new Error(error.message, { cause: error })
+  }
   return data
 }
 
@@ -130,7 +140,9 @@ export async function createCategory(data: CategoryFormData) {
 
   const { error } = await supabase.from('categories').insert(validated)
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    throw new Error(error.message, { cause: error })
+  }
   revalidatePath('/categories')
   revalidatePath('/products')
 }
@@ -145,7 +157,9 @@ export async function updateCategory(id: string, data: CategoryFormData) {
     .update(validated)
     .eq('id', id)
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    throw new Error(error.message, { cause: error })
+  }
   revalidatePath('/categories')
   revalidatePath('/products')
 }
@@ -156,7 +170,9 @@ export async function deleteCategory(id: string) {
 
   const { error } = await supabase.from('categories').delete().eq('id', id)
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    throw new Error(error.message, { cause: error })
+  }
   revalidatePath('/categories')
   revalidatePath('/products')
 }
@@ -175,7 +191,7 @@ export async function getProductsByIds(ids: string[]) {
     )
     .in('id', ids)
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(error.message, { cause: error })
   return data
 }
 
@@ -194,7 +210,7 @@ export async function getProduct(id: string) {
     .eq('id', id)
     .single()
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(error.message, { cause: error })
   return data
 }
 
@@ -206,7 +222,7 @@ export async function getCategories() {
     .select('*')
     .order('name')
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(error.message, { cause: error })
   return data
 }
 
@@ -228,6 +244,6 @@ export async function getSpecsByIds(specIds: string[]) {
     )
     .in('id', specIds)
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(error.message, { cause: error })
   return data
 }
