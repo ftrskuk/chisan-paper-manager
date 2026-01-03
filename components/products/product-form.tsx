@@ -1,13 +1,8 @@
 'use client'
 
-import { useForm, useFieldArray } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import {
-  productFormSchema,
-  type ProductFormData,
-} from '@/lib/validations/product'
+import { useProductForm } from './use-product-form'
+import type { ProductFormData } from '@/lib/validations/product'
 import type { Category } from '@/types/database'
-import { useState } from 'react'
 
 interface ProductFormProps {
   categories: Category[]
@@ -15,127 +10,31 @@ interface ProductFormProps {
   defaultValues?: Partial<ProductFormData>
 }
 
-const defaultSpec = {
-  gsm: 100,
-  caliper: 150,
-  extra_specs: {} as Record<string, unknown>,
-}
-
-type ExtraSpecEntry = { key: string; value: string }
-
 export function ProductForm({
   categories,
   onSubmit,
   defaultValues,
 }: ProductFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const initialExtraSpecs = (defaultValues?.specs || [defaultSpec]).map(
-    (spec) =>
-      Object.entries(spec.extra_specs || {}).map(([key, value]) => ({
-        key,
-        value: String(value),
-      }))
-  )
-  const [extraSpecsPerSpec, setExtraSpecsPerSpec] = useState<
-    ExtraSpecEntry[][]
-  >(initialExtraSpecs.length > 0 ? initialExtraSpecs : [[]])
-
   const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors },
-  } = useForm<ProductFormData>({
-    resolver: zodResolver(productFormSchema),
-    defaultValues: {
-      mill_name: '',
-      name: '',
-      specs: [defaultSpec],
-      ...defaultValues,
+    form: {
+      register,
+      formState: { errors },
     },
-  })
-
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'specs',
-  })
-
-  const handleFormSubmit = async (data: ProductFormData) => {
-    setIsSubmitting(true)
-    try {
-      const dataWithExtraSpecs = {
-        ...data,
-        specs: data.specs.map((spec, index) => ({
-          ...spec,
-          extra_specs:
-            extraSpecsPerSpec[index]?.reduce(
-              (acc, { key, value }) => {
-                if (key.trim()) {
-                  const numValue = parseFloat(value)
-                  acc[key.trim()] = isNaN(numValue) ? value : numValue
-                }
-                return acc
-              },
-              {} as Record<string, unknown>
-            ) || {},
-        })),
-      }
-      await onSubmit(dataWithExtraSpecs)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const handleAddSpec = () => {
-    append(defaultSpec)
-    setExtraSpecsPerSpec((prev) => [...prev, []])
-  }
-
-  const handleRemoveSpec = (index: number) => {
-    remove(index)
-    setExtraSpecsPerSpec((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  const addExtraSpec = (specIndex: number) => {
-    setExtraSpecsPerSpec((prev) => {
-      const updated = [...prev]
-      updated[specIndex] = [
-        ...(updated[specIndex] || []),
-        { key: '', value: '' },
-      ]
-      return updated
-    })
-  }
-
-  const removeExtraSpec = (specIndex: number, extraIndex: number) => {
-    setExtraSpecsPerSpec((prev) => {
-      const updated = [...prev]
-      updated[specIndex] = updated[specIndex].filter((_, i) => i !== extraIndex)
-      return updated
-    })
-  }
-
-  const updateExtraSpec = (
-    specIndex: number,
-    extraIndex: number,
-    field: 'key' | 'value',
-    value: string
-  ) => {
-    setExtraSpecsPerSpec((prev) => {
-      const updated = [...prev]
-      updated[specIndex] = updated[specIndex].map((entry, i) =>
-        i === extraIndex ? { ...entry, [field]: value } : entry
-      )
-      return updated
-    })
-  }
+    fields,
+    isSubmitting,
+    extraSpecsPerSpec,
+    submitHandler,
+    actions: {
+      handleAddSpec,
+      handleRemoveSpec,
+      addExtraSpec,
+      removeExtraSpec,
+      updateExtraSpec,
+    },
+  } = useProductForm({ defaultValues, onSubmit })
 
   return (
-    <form
-      onSubmit={handleSubmit(handleFormSubmit)}
-      className="space-y-8 max-w-5xl mx-auto"
-    >
+    <form onSubmit={submitHandler} className="space-y-8 max-w-5xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">

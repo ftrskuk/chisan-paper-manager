@@ -36,4 +36,14 @@ next-env.d.ts
 
 # Supabase
 .supabase/
+supabase/.temp/
+
+# Playwright
+playwright-report/
+test-results/
+
+# Temp files
+fix-db.js
+
+# Local env files
 .env
