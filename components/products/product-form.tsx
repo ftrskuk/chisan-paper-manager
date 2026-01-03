@@ -6,13 +6,7 @@ import {
   productFormSchema,
   type ProductFormData,
 } from '@/lib/validations/product'
-import {
-  convertToMicrometers,
-  convertToKNPerMeter,
-  convertToMillinewtons,
-} from '@/utils/unit-converters'
 import type { Category } from '@/types/database'
-import type { ThicknessUnit, TensileUnit, TearUnit } from '@/types/database'
 import { useState } from 'react'
 
 interface ProductFormProps {
@@ -24,9 +18,6 @@ interface ProductFormProps {
 const defaultSpec = {
   gsm: 100,
   caliper: 150,
-  caliper_unit: 'µm' as ThicknessUnit,
-  tensile_unit: 'kN/m' as TensileUnit,
-  tear_unit: 'mN' as TearUnit,
   extra_specs: {} as Record<string, unknown>,
 }
 
@@ -54,7 +45,6 @@ export function ProductForm({
     register,
     handleSubmit,
     control,
-    watch,
     formState: { errors },
   } = useForm<ProductFormData>({
     resolver: zodResolver(productFormSchema),
@@ -70,8 +60,6 @@ export function ProductForm({
     control,
     name: 'specs',
   })
-
-  const watchedSpecs = watch('specs')
 
   const handleFormSubmit = async (data: ProductFormData) => {
     setIsSubmitting(true)
@@ -141,30 +129,6 @@ export function ProductForm({
       )
       return updated
     })
-  }
-
-  const getConvertedCaliper = (index: number) => {
-    const spec = watchedSpecs?.[index]
-    if (!spec?.caliper || !spec?.caliper_unit) return null
-    return convertToMicrometers(spec.caliper, spec.caliper_unit).toFixed(1)
-  }
-
-  const getConvertedTensile = (
-    index: number,
-    field: 'tensile_md' | 'tensile_cd'
-  ) => {
-    const spec = watchedSpecs?.[index]
-    const value = spec?.[field]
-    if (value === undefined || value === null || !spec?.tensile_unit)
-      return null
-    return convertToKNPerMeter(value, spec.tensile_unit).toFixed(3)
-  }
-
-  const getConvertedTear = (index: number, field: 'tear_md' | 'tear_cd') => {
-    const spec = watchedSpecs?.[index]
-    const value = spec?.[field]
-    if (value === undefined || value === null || !spec?.tear_unit) return null
-    return convertToMillinewtons(value, spec.tear_unit).toFixed(1)
   }
 
   return (
@@ -272,8 +236,7 @@ export function ProductForm({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* GSM Field */}
-              <div className="relative group">
+              <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
                   GSM (g/m²)
                 </label>
@@ -290,156 +253,84 @@ export function ProductForm({
                 )}
               </div>
 
-              {/* Caliper Field */}
-              <div className="relative group">
+              <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                  Caliper
+                  Caliper (µm)
                 </label>
-                <div className="flex rounded-md shadow-sm">
-                  <input
-                    type="number"
-                    step="0.001"
-                    {...register(`specs.${index}.caliper`, {
-                      valueAsNumber: true,
-                    })}
-                    className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:z-10 bg-white"
-                    placeholder="Thickness"
-                  />
-                  <select
-                    {...register(`specs.${index}.caliper_unit`)}
-                    className="w-[4.5rem] px-2 py-2 border-l-0 border border-gray-300 rounded-r-md bg-gray-50 text-gray-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:z-10 cursor-pointer hover:bg-gray-100"
-                  >
-                    <option value="µm">µm</option>
-                    <option value="mm">mm</option>
-                    <option value="mil">mil</option>
-                    <option value="inch">in</option>
-                  </select>
-                </div>
-                {getConvertedCaliper(index) &&
-                  watchedSpecs?.[index]?.caliper_unit !== 'µm' && (
-                    <p className="absolute -bottom-5 left-0 text-[10px] text-gray-500 bg-gray-100 px-1 rounded">
-                      ≈ {getConvertedCaliper(index)} µm
-                    </p>
-                  )}
+                <input
+                  type="number"
+                  step="0.1"
+                  {...register(`specs.${index}.caliper`, {
+                    valueAsNumber: true,
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  placeholder="150"
+                />
+                {errors.specs?.[index]?.caliper && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.specs[index]?.caliper?.message}
+                  </p>
+                )}
               </div>
 
-              {/* Tensile MD */}
-              <div className="relative group">
+              <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                  Tensile MD
+                  Tensile MD (kN/m)
                 </label>
-                <div className="flex rounded-md shadow-sm">
-                  <input
-                    type="number"
-                    step="0.001"
-                    {...register(`specs.${index}.tensile_md`, {
-                      valueAsNumber: true,
-                    })}
-                    className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:z-10 bg-white"
-                  />
-                  <select
-                    {...register(`specs.${index}.tensile_unit`)}
-                    className="w-28 px-2 py-2 border-l-0 border border-gray-300 rounded-r-md bg-gray-50 text-gray-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:z-10 cursor-pointer hover:bg-gray-100"
-                  >
-                    <option value="kN/m">kN/m</option>
-                    <option value="kgf/15mm">kgf</option>
-                    <option value="N/15mm">N</option>
-                    <option value="lb/in">lb/in</option>
-                  </select>
-                </div>
-                {getConvertedTensile(index, 'tensile_md') &&
-                  watchedSpecs?.[index]?.tensile_unit !== 'kN/m' && (
-                    <p className="absolute -bottom-5 left-0 text-[10px] text-gray-500 bg-gray-100 px-1 rounded">
-                      ≈ {getConvertedTensile(index, 'tensile_md')} kN/m
-                    </p>
-                  )}
+                <input
+                  type="number"
+                  step="0.001"
+                  {...register(`specs.${index}.tensile_md`, {
+                    valueAsNumber: true,
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  placeholder="5.5"
+                />
               </div>
 
-              {/* Tensile CD */}
-              <div className="relative group">
+              <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                  Tensile CD
+                  Tensile CD (kN/m)
                 </label>
-                <div className="flex rounded-md shadow-sm">
-                  <input
-                    type="number"
-                    step="0.001"
-                    {...register(`specs.${index}.tensile_cd`, {
-                      valueAsNumber: true,
-                    })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  />
-                  <div className="absolute right-0 top-0 bottom-0 flex items-center pr-3 pointer-events-none">
-                    <span className="text-gray-400 text-sm font-medium">
-                      {watchedSpecs?.[index]?.tensile_unit || 'kN/m'}
-                    </span>
-                  </div>
-                </div>
-                {getConvertedTensile(index, 'tensile_cd') &&
-                  watchedSpecs?.[index]?.tensile_unit !== 'kN/m' && (
-                    <p className="absolute -bottom-5 left-0 text-[10px] text-gray-500 bg-gray-100 px-1 rounded">
-                      ≈ {getConvertedTensile(index, 'tensile_cd')} kN/m
-                    </p>
-                  )}
+                <input
+                  type="number"
+                  step="0.001"
+                  {...register(`specs.${index}.tensile_cd`, {
+                    valueAsNumber: true,
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  placeholder="4.2"
+                />
               </div>
 
-              {/* Tear MD */}
-              <div className="relative group">
+              <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                  Tear MD
+                  Tear MD (mN)
                 </label>
-                <div className="flex rounded-md shadow-sm">
-                  <input
-                    type="number"
-                    step="0.1"
-                    {...register(`specs.${index}.tear_md`, {
-                      valueAsNumber: true,
-                    })}
-                    className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:z-10 bg-white"
-                  />
-                  <select
-                    {...register(`specs.${index}.tear_unit`)}
-                    className="w-[4.5rem] px-2 py-2 border-l-0 border border-gray-300 rounded-r-md bg-gray-50 text-gray-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:z-10 cursor-pointer hover:bg-gray-100"
-                  >
-                    <option value="mN">mN</option>
-                    <option value="gf">gf</option>
-                    <option value="cN">cN</option>
-                  </select>
-                </div>
-                {getConvertedTear(index, 'tear_md') &&
-                  watchedSpecs?.[index]?.tear_unit !== 'mN' && (
-                    <p className="absolute -bottom-5 left-0 text-[10px] text-gray-500 bg-gray-100 px-1 rounded">
-                      ≈ {getConvertedTear(index, 'tear_md')} mN
-                    </p>
-                  )}
+                <input
+                  type="number"
+                  step="1"
+                  {...register(`specs.${index}.tear_md`, {
+                    valueAsNumber: true,
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  placeholder="800"
+                />
               </div>
 
-              {/* Tear CD */}
-              <div className="relative group">
+              <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                  Tear CD
+                  Tear CD (mN)
                 </label>
-                <div className="flex rounded-md shadow-sm">
-                  <input
-                    type="number"
-                    step="0.1"
-                    {...register(`specs.${index}.tear_cd`, {
-                      valueAsNumber: true,
-                    })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  />
-                  <div className="absolute right-0 top-0 bottom-0 flex items-center pr-3 pointer-events-none">
-                    <span className="text-gray-400 text-sm font-medium">
-                      {watchedSpecs?.[index]?.tear_unit || 'mN'}
-                    </span>
-                  </div>
-                </div>
-                {getConvertedTear(index, 'tear_cd') &&
-                  watchedSpecs?.[index]?.tear_unit !== 'mN' && (
-                    <p className="absolute -bottom-5 left-0 text-[10px] text-gray-500 bg-gray-100 px-1 rounded">
-                      ≈ {getConvertedTear(index, 'tear_cd')} mN
-                    </p>
-                  )}
+                <input
+                  type="number"
+                  step="1"
+                  {...register(`specs.${index}.tear_cd`, {
+                    valueAsNumber: true,
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  placeholder="900"
+                />
               </div>
             </div>
 

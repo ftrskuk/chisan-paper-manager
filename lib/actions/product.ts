@@ -8,11 +8,6 @@ import {
   type ProductFormData,
   type CategoryFormData,
 } from '@/lib/validations/product'
-import {
-  convertToMicrometers,
-  convertToKNPerMeter,
-  convertToMillinewtons,
-} from '@/utils/unit-converters'
 import { revalidatePath } from 'next/cache'
 
 export async function createProduct(data: ProductFormData) {
@@ -39,19 +34,11 @@ export async function createProduct(data: ProductFormData) {
   const specsToInsert = validated.specs.map((spec) => ({
     product_id: product.id,
     gsm: spec.gsm,
-    caliper: convertToMicrometers(spec.caliper, spec.caliper_unit),
-    tensile_md: spec.tensile_md
-      ? convertToKNPerMeter(spec.tensile_md, spec.tensile_unit)
-      : null,
-    tensile_cd: spec.tensile_cd
-      ? convertToKNPerMeter(spec.tensile_cd, spec.tensile_unit)
-      : null,
-    tear_md: spec.tear_md
-      ? convertToMillinewtons(spec.tear_md, spec.tear_unit)
-      : null,
-    tear_cd: spec.tear_cd
-      ? convertToMillinewtons(spec.tear_cd, spec.tear_unit)
-      : null,
+    caliper: spec.caliper,
+    tensile_md: spec.tensile_md ?? null,
+    tensile_cd: spec.tensile_cd ?? null,
+    tear_md: spec.tear_md ?? null,
+    tear_cd: spec.tear_cd ?? null,
     extra_specs: spec.extra_specs,
   }))
 
@@ -89,19 +76,11 @@ export async function updateProduct(productId: string, data: ProductFormData) {
   const specsToInsert = validated.specs.map((spec) => ({
     product_id: productId,
     gsm: spec.gsm,
-    caliper: convertToMicrometers(spec.caliper, spec.caliper_unit),
-    tensile_md: spec.tensile_md
-      ? convertToKNPerMeter(spec.tensile_md, spec.tensile_unit)
-      : null,
-    tensile_cd: spec.tensile_cd
-      ? convertToKNPerMeter(spec.tensile_cd, spec.tensile_unit)
-      : null,
-    tear_md: spec.tear_md
-      ? convertToMillinewtons(spec.tear_md, spec.tear_unit)
-      : null,
-    tear_cd: spec.tear_cd
-      ? convertToMillinewtons(spec.tear_cd, spec.tear_unit)
-      : null,
+    caliper: spec.caliper,
+    tensile_md: spec.tensile_md ?? null,
+    tensile_cd: spec.tensile_cd ?? null,
+    tear_md: spec.tear_md ?? null,
+    tear_cd: spec.tear_cd ?? null,
     extra_specs: spec.extra_specs,
   }))
 

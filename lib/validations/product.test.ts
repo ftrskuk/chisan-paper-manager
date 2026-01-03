@@ -6,13 +6,10 @@ describe('productSpecSchema', () => {
     const validSpec = {
       gsm: 100,
       caliper: 150,
-      caliper_unit: 'µm',
       tensile_md: 5.5,
       tensile_cd: 4.2,
-      tensile_unit: 'kN/m',
       tear_md: 800,
       tear_cd: 900,
-      tear_unit: 'mN',
       extra_specs: {},
     }
     const result = productSpecSchema.safeParse(validSpec)
@@ -23,9 +20,6 @@ describe('productSpecSchema', () => {
     const minimalSpec = {
       gsm: 80,
       caliper: 100,
-      caliper_unit: 'µm',
-      tensile_unit: 'kN/m',
-      tear_unit: 'mN',
       extra_specs: {},
     }
     const result = productSpecSchema.safeParse(minimalSpec)
@@ -36,9 +30,6 @@ describe('productSpecSchema', () => {
     const invalidSpec = {
       gsm: 0,
       caliper: 100,
-      caliper_unit: 'µm',
-      tensile_unit: 'kN/m',
-      tear_unit: 'mN',
       extra_specs: {},
     }
     const result = productSpecSchema.safeParse(invalidSpec)
@@ -49,9 +40,6 @@ describe('productSpecSchema', () => {
     const invalidSpec = {
       gsm: -50,
       caliper: 100,
-      caliper_unit: 'µm',
-      tensile_unit: 'kN/m',
-      tear_unit: 'mN',
       extra_specs: {},
     }
     const result = productSpecSchema.safeParse(invalidSpec)
@@ -62,84 +50,17 @@ describe('productSpecSchema', () => {
     const invalidSpec = {
       gsm: 100,
       caliper: 0,
-      caliper_unit: 'µm',
-      tensile_unit: 'kN/m',
-      tear_unit: 'mN',
       extra_specs: {},
     }
     const result = productSpecSchema.safeParse(invalidSpec)
     expect(result.success).toBe(false)
   })
 
-  it('accepts all valid caliper units', () => {
-    const units = ['µm', 'mm', 'mil', 'inch'] as const
-    units.forEach((unit) => {
-      const spec = {
-        gsm: 100,
-        caliper: 150,
-        caliper_unit: unit,
-        tensile_unit: 'kN/m',
-        tear_unit: 'mN',
-        extra_specs: {},
-      }
-      const result = productSpecSchema.safeParse(spec)
-      expect(result.success).toBe(true)
-    })
-  })
-
-  it('rejects invalid caliper unit', () => {
-    const spec = {
-      gsm: 100,
-      caliper: 150,
-      caliper_unit: 'cm',
-      tensile_unit: 'kN/m',
-      tear_unit: 'mN',
-      extra_specs: {},
-    }
-    const result = productSpecSchema.safeParse(spec)
-    expect(result.success).toBe(false)
-  })
-
-  it('accepts all valid tensile units', () => {
-    const units = ['kN/m', 'kgf/15mm', 'N/15mm', 'lb/in'] as const
-    units.forEach((unit) => {
-      const spec = {
-        gsm: 100,
-        caliper: 150,
-        caliper_unit: 'µm',
-        tensile_unit: unit,
-        tear_unit: 'mN',
-        extra_specs: {},
-      }
-      const result = productSpecSchema.safeParse(spec)
-      expect(result.success).toBe(true)
-    })
-  })
-
-  it('accepts all valid tear units', () => {
-    const units = ['mN', 'gf', 'cN'] as const
-    units.forEach((unit) => {
-      const spec = {
-        gsm: 100,
-        caliper: 150,
-        caliper_unit: 'µm',
-        tensile_unit: 'kN/m',
-        tear_unit: unit,
-        extra_specs: {},
-      }
-      const result = productSpecSchema.safeParse(spec)
-      expect(result.success).toBe(true)
-    })
-  })
-
   it('rejects negative tensile values', () => {
     const spec = {
       gsm: 100,
       caliper: 150,
-      caliper_unit: 'µm',
       tensile_md: -1,
-      tensile_unit: 'kN/m',
-      tear_unit: 'mN',
       extra_specs: {},
     }
     const result = productSpecSchema.safeParse(spec)
@@ -150,10 +71,7 @@ describe('productSpecSchema', () => {
     const spec = {
       gsm: 100,
       caliper: 150,
-      caliper_unit: 'µm',
-      tensile_unit: 'kN/m',
       tear_md: -1,
-      tear_unit: 'mN',
       extra_specs: {},
     }
     const result = productSpecSchema.safeParse(spec)
@@ -165,9 +83,6 @@ describe('productFormSchema', () => {
   const validSpec = {
     gsm: 100,
     caliper: 150,
-    caliper_unit: 'µm',
-    tensile_unit: 'kN/m',
-    tear_unit: 'mN',
     extra_specs: {},
   }
 
