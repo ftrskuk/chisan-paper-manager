@@ -69,23 +69,23 @@ export interface TDSParsedSpec {
   gsm: number
   caliper?: {
     value: number | null
-    unit: 'µm' | 'mm' | 'mil' | null
+    unit: 'µm' | 'mm' | 'mil' | 'inch' | null
   } | null
   tensile_md?: {
     value: number | null
-    unit: 'kN/m' | 'kgf/15mm' | 'N/15mm' | null
+    unit: 'kN/m' | 'kgf/15mm' | 'N/15mm' | 'lb/in' | null
   } | null
   tensile_cd?: {
     value: number | null
-    unit: 'kN/m' | 'kgf/15mm' | 'N/15mm' | null
+    unit: 'kN/m' | 'kgf/15mm' | 'N/15mm' | 'lb/in' | null
   } | null
   tear_md?: {
     value: number | null
-    unit: 'mN' | 'gf' | null
+    unit: 'mN' | 'gf' | 'cN' | null
   } | null
   tear_cd?: {
     value: number | null
-    unit: 'mN' | 'gf' | null
+    unit: 'mN' | 'gf' | 'cN' | null
   } | null
   smoothness?: {
     value: number | null
@@ -136,13 +136,10 @@ export interface ProductFormInput {
 export interface ProductSpecFormInput {
   gsm: number
   caliper: number
-  caliper_unit: ThicknessUnit
   tensile_md?: number
   tensile_cd?: number
-  tensile_unit: TensileUnit
   tear_md?: number
   tear_cd?: number
-  tear_unit: TearUnit
   extra_specs: Record<string, unknown>
 }
 

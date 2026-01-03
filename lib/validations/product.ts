@@ -1,25 +1,25 @@
 import * as z from 'zod'
 
+// Unit schemas - used for TDS parsing (AI extracts various units)
 export const thicknessUnitSchema = z.enum(['µm', 'mm', 'mil', 'inch'])
 export const tensileUnitSchema = z.enum(['kN/m', 'kgf/15mm', 'N/15mm', 'lb/in'])
 export const tearUnitSchema = z.enum(['mN', 'gf', 'cN'])
 
+// Product spec schema for manual input - values in STANDARD UNITS only
+// Standard units: caliper=µm, tensile=kN/m, tear=mN
 export const productSpecSchema = z.object({
   gsm: z.number().positive('GSM must be positive'),
-  caliper: z.number().positive('Caliper must be positive'),
-  caliper_unit: thicknessUnitSchema,
+  caliper: z.number().positive('Caliper must be positive'), // µm
   tensile_md: z
     .number()
     .nonnegative('Tensile MD cannot be negative')
-    .optional(),
+    .optional(), // kN/m
   tensile_cd: z
     .number()
     .nonnegative('Tensile CD cannot be negative')
-    .optional(),
-  tensile_unit: tensileUnitSchema,
-  tear_md: z.number().nonnegative('Tear MD cannot be negative').optional(),
-  tear_cd: z.number().nonnegative('Tear CD cannot be negative').optional(),
-  tear_unit: tearUnitSchema,
+    .optional(), // kN/m
+  tear_md: z.number().nonnegative('Tear MD cannot be negative').optional(), // mN
+  tear_cd: z.number().nonnegative('Tear CD cannot be negative').optional(), // mN
   extra_specs: z.record(z.unknown()),
 })
 
@@ -55,11 +55,11 @@ const valueUnitSchema = <T extends readonly [string, ...string[]]>(units: T) =>
 
 export const tdsSpecSchema = z.object({
   gsm: z.number().positive('GSM must be positive'),
-  caliper: valueUnitSchema(['µm', 'mm', 'mil'] as const),
-  tensile_md: valueUnitSchema(['kN/m', 'kgf/15mm', 'N/15mm'] as const),
-  tensile_cd: valueUnitSchema(['kN/m', 'kgf/15mm', 'N/15mm'] as const),
-  tear_md: valueUnitSchema(['mN', 'gf'] as const),
-  tear_cd: valueUnitSchema(['mN', 'gf'] as const),
+  caliper: valueUnitSchema(['µm', 'mm', 'mil', 'inch'] as const),
+  tensile_md: valueUnitSchema(['kN/m', 'kgf/15mm', 'N/15mm', 'lb/in'] as const),
+  tensile_cd: valueUnitSchema(['kN/m', 'kgf/15mm', 'N/15mm', 'lb/in'] as const),
+  tear_md: valueUnitSchema(['mN', 'gf', 'cN'] as const),
+  tear_cd: valueUnitSchema(['mN', 'gf', 'cN'] as const),
   smoothness: z
     .object({
       value: z.number().nullable(),

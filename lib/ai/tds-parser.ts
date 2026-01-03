@@ -19,11 +19,11 @@ IMPORTANT RULES:
 2. Preserve the exact units shown in the document
 3. For MD/CD values (Machine Direction/Cross Direction), extract both if available
 4. Common unit mappings:
-   - Thickness/Caliper: µm, mm, or mil
-   - Tensile: kN/m, kgf/15mm, or N/15mm
-   - Tear: mN or gf
+   - Thickness/Caliper: µm, mm, mil, or inch
+   - Tensile: kN/m, kgf/15mm, N/15mm, or lb/in
+   - Tear: mN, gf, or cN
    - Smoothness: sec (Bekk), ml/min (Bendtsen), or µm (PPS)
-   - Stiffness: mN·m or gf·cm
+   - Stiffness: mN·m, gf·cm, or mN·mm
    - Brightness, Opacity, Moisture: percentage (0-100)
    - Cobb 60: g/m²
    - Density: g/cm³
@@ -43,11 +43,11 @@ Return a JSON object with this exact structure:
   "specs": [
     {
       "gsm": number,
-      "caliper": { "value": number, "unit": "µm" | "mm" | "mil" } | null,
-      "tensile_md": { "value": number, "unit": "kN/m" | "kgf/15mm" | "N/15mm" } | null,
-      "tensile_cd": { "value": number, "unit": "kN/m" | "kgf/15mm" | "N/15mm" } | null,
-      "tear_md": { "value": number, "unit": "mN" | "gf" } | null,
-      "tear_cd": { "value": number, "unit": "mN" | "gf" } | null,
+      "caliper": { "value": number, "unit": "µm" | "mm" | "mil" | "inch" } | null,
+      "tensile_md": { "value": number, "unit": "kN/m" | "kgf/15mm" | "N/15mm" | "lb/in" } | null,
+      "tensile_cd": { "value": number, "unit": "kN/m" | "kgf/15mm" | "N/15mm" | "lb/in" } | null,
+      "tear_md": { "value": number, "unit": "mN" | "gf" | "cN" } | null,
+      "tear_cd": { "value": number, "unit": "mN" | "gf" | "cN" } | null,
       "smoothness": { "value": number, "unit": "sec" | "ml/min" | "µm", "method": "Bekk" | "Bendtsen" | "PPS" } | null,
       "stiffness_md": { "value": number, "unit": "mN·m" | "gf·cm" | "mN·mm" } | null,
       "stiffness_cd": { "value": number, "unit": "mN·m" | "gf·cm" | "mN·mm" } | null,
@@ -138,7 +138,7 @@ function validateAndNormalize(raw: unknown): TDSParseResult {
         if (cal.value > 0) {
           normalizedSpec.caliper = {
             value: cal.value,
-            unit: cal.unit as 'µm' | 'mm' | 'mil',
+            unit: cal.unit as 'µm' | 'mm' | 'mil' | 'inch',
           }
         }
       }
@@ -148,7 +148,7 @@ function validateAndNormalize(raw: unknown): TDSParseResult {
         if (t.value > 0) {
           normalizedSpec.tensile_md = {
             value: t.value,
-            unit: t.unit as 'kN/m' | 'kgf/15mm' | 'N/15mm',
+            unit: t.unit as 'kN/m' | 'kgf/15mm' | 'N/15mm' | 'lb/in',
           }
         }
       }
@@ -158,7 +158,7 @@ function validateAndNormalize(raw: unknown): TDSParseResult {
         if (t.value > 0) {
           normalizedSpec.tensile_cd = {
             value: t.value,
-            unit: t.unit as 'kN/m' | 'kgf/15mm' | 'N/15mm',
+            unit: t.unit as 'kN/m' | 'kgf/15mm' | 'N/15mm' | 'lb/in',
           }
         }
       }
@@ -168,7 +168,7 @@ function validateAndNormalize(raw: unknown): TDSParseResult {
         if (t.value > 0) {
           normalizedSpec.tear_md = {
             value: t.value,
-            unit: t.unit as 'mN' | 'gf',
+            unit: t.unit as 'mN' | 'gf' | 'cN',
           }
         }
       }
@@ -178,7 +178,7 @@ function validateAndNormalize(raw: unknown): TDSParseResult {
         if (t.value > 0) {
           normalizedSpec.tear_cd = {
             value: t.value,
-            unit: t.unit as 'mN' | 'gf',
+            unit: t.unit as 'mN' | 'gf' | 'cN',
           }
         }
       }
