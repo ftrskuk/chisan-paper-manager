@@ -176,6 +176,46 @@ react-hook-form에서 optional nested object를 다룰 때:
 
 ---
 
+---
+
+## Spec Detail Sidebar (2026-01-03)
+
+### Overview
+
+Products 테이블에서 개별 스펙을 클릭하면 오른쪽에서 슬라이드되는 사이드바로 상세 정보를 표시하는 기능.
+
+### Components
+
+| 파일                                          | 설명                                         |
+| --------------------------------------------- | -------------------------------------------- |
+| `components/ui/sheet.tsx`                     | shadcn/ui Sheet 컴포넌트 (Radix Dialog 기반) |
+| `components/products/spec-detail-sidebar.tsx` | Spec 상세 정보 표시 사이드바                 |
+
+### Dependencies Added
+
+- `@radix-ui/react-dialog` - Sheet 컴포넌트 기반
+- `tailwindcss-animate` - 슬라이드 애니메이션
+
+### User Interaction
+
+| 액션                             | 결과                                    |
+| -------------------------------- | --------------------------------------- |
+| GSM 숫자 클릭                    | 오른쪽에서 Sidebar 슬라이드 인          |
+| Checkbox 클릭                    | Compare list에 추가 (Sidebar 열지 않음) |
+| Sidebar 외부 클릭 / X 버튼       | Sidebar 닫힘                            |
+| Sidebar 내 "Add to Compare" 버튼 | Compare list 토글                       |
+
+### Sidebar Content
+
+1. **Header**: 제지사, 제품명, 카테고리, GSM
+2. **Basic Properties**: GSM, Caliper, Density
+3. **Strength Properties**: Tensile MD/CD, Tear MD/CD, Stiffness MD/CD
+4. **Surface & Optical**: Brightness, Opacity, Smoothness, Cobb 60, Moisture
+5. **Additional Specs**: extra_specs 필드 (동적)
+6. **Footer**: Compare List 추가/제거 버튼
+
+---
+
 ## Quick Start for Next Session
 
 ```bash
@@ -188,4 +228,7 @@ npm run build
 # Test the upload flow
 npm run dev
 # Navigate to /products/upload
+
+# Test spec detail sidebar
+# Navigate to /products → expand product → click GSM number
 ```

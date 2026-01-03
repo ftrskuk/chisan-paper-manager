@@ -4,12 +4,18 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteProduct } from '@/lib/actions/product'
+import { SpecDetailSidebar } from './spec-detail-sidebar'
 import type { ProductWithSpecs, Category, ProductSpec } from '@/types/database'
 
 interface ProductWithRelations extends ProductWithSpecs {
   categories: Category | null
   product_specs: ProductSpec[]
 }
+
+type SidebarData = {
+  spec: ProductSpec
+  product: ProductWithRelations
+} | null
 
 interface ProductsTableProps {
   products: ProductWithRelations[]
@@ -32,6 +38,20 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
     null
   )
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [sidebarData, setSidebarData] = useState<SidebarData>(null)
+
+  const openSidebar = (product: ProductWithRelations, spec: ProductSpec) => {
+    setSidebarData({ product, spec })
+  }
+
+  const closeSidebar = () => {
+    setSidebarData(null)
+  }
+
+  const handleSidebarToggleSelect = () => {
+    if (!sidebarData) return
+    toggleSpecSelection(sidebarData.product, sidebarData.spec)
+  }
 
   const toggleExpand = (productId: string) => {
     setExpandedProductId((prev) => (prev === productId ? null : productId))
@@ -237,13 +257,13 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                           {product.product_specs
                             .sort((a, b) => a.gsm - b.gsm)
                             .map((spec) => (
-                              <label
+                              <div
                                 key={spec.id}
-                                className={`inline-flex items-center px-3 py-1.5 rounded border cursor-pointer transition-colors ${
+                                className={`inline-flex items-center px-3 py-1.5 rounded border transition-colors ${
                                   isSpecSelected(spec.id)
                                     ? 'bg-blue-100 border-blue-400 text-blue-800'
                                     : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
-                                } ${selectedSpecs.size >= 10 && !isSpecSelected(spec.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                } ${selectedSpecs.size >= 10 && !isSpecSelected(spec.id) ? 'opacity-50' : ''}`}
                               >
                                 <input
                                   type="checkbox"
@@ -255,10 +275,16 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                                     selectedSpecs.size >= 10 &&
                                     !isSpecSelected(spec.id)
                                   }
-                                  className="mr-2"
+                                  className="mr-2 cursor-pointer"
                                 />
-                                {spec.gsm}g
-                              </label>
+                                <button
+                                  type="button"
+                                  onClick={() => openSidebar(product, spec)}
+                                  className="hover:underline cursor-pointer"
+                                >
+                                  {spec.gsm}g
+                                </button>
+                              </div>
                             ))}
                         </div>
                       </td>
@@ -270,6 +296,15 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
           </tbody>
         </table>
       </div>
+
+      <SpecDetailSidebar
+        spec={sidebarData?.spec ?? null}
+        product={sidebarData?.product ?? null}
+        isOpen={sidebarData !== null}
+        onClose={closeSidebar}
+        isSelected={sidebarData ? isSpecSelected(sidebarData.spec.id) : false}
+        onToggleSelect={handleSidebarToggleSelect}
+      />
     </div>
   )
 }
