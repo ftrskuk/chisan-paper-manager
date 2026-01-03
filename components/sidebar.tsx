@@ -23,7 +23,7 @@ export function Sidebar({ profile }: SidebarProps) {
   const filteredItems = navItems.filter((item) => !item.adminOnly || isAdmin)
 
   return (
-    <aside className="w-64 border-r bg-gray-50 min-h-screen p-4">
+    <aside className="w-64 border-r bg-gray-50 min-h-screen p-4 relative">
       <div className="mb-8">
         <h1 className="text-xl font-bold text-gray-900">Chisan Paper</h1>
         <p className="text-sm text-gray-500">Technical Data Manager</p>

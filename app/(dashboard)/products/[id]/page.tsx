@@ -2,16 +2,15 @@ import Link from 'next/link'
 import { getProduct } from '@/lib/actions/product'
 import { getProfile, isAdmin } from '@/lib/auth'
 import { ChevronLeft, Pencil } from 'lucide-react'
+import type { ProductSpec } from '@/types/database'
 
 export default async function ProductPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
-  const [product, profile] = await Promise.all([
-    getProduct(params.id),
-    getProfile(),
-  ])
+  const { id } = await params
+  const [product, profile] = await Promise.all([getProduct(id), getProfile()])
 
   const admin = isAdmin(profile)
 
@@ -74,8 +73,8 @@ export default async function ProductPage({
             </thead>
             <tbody className="divide-y divide-gray-200">
               {product.product_specs
-                .sort((a: any, b: any) => a.gsm - b.gsm)
-                .map((spec: any) => (
+                .sort((a: ProductSpec, b: ProductSpec) => a.gsm - b.gsm)
+                .map((spec: ProductSpec) => (
                   <tr
                     key={spec.id}
                     className="hover:bg-gray-50 transition-colors"

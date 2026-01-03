@@ -98,7 +98,9 @@ export function TDSUploadClient({ categories }: TDSUploadClientProps) {
     if (state.filePath) {
       try {
         await deleteStorageFile(state.filePath)
-      } catch {}
+      } catch {
+        // Best-effort cleanup - user cancelled, proceed regardless of delete success
+      }
     }
     setState(initialState)
   }, [state.filePath])

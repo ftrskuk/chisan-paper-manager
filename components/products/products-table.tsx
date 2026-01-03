@@ -1,7 +1,7 @@
 'use client'
 
+import { Fragment, useState } from 'react'
 import Link from 'next/link'
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteProduct } from '@/lib/actions/product'
 import { SpecDetailSidebar } from './spec-detail-sidebar'
@@ -186,8 +186,8 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
               const isExpanded = expandedProductId === product.id
 
               return (
-                <>
-                  <tr key={product.id} className="border-b hover:bg-gray-50">
+                <Fragment key={product.id}>
+                  <tr className="border-b hover:bg-gray-50">
                     <td className="p-3">
                       <button
                         onClick={() => toggleExpand(product.id)}
@@ -290,7 +290,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               )
             })}
           </tbody>

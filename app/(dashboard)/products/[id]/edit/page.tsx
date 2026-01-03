@@ -5,12 +5,13 @@ import { EditProductClient } from './client'
 export default async function EditProductPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
   await requireAdmin()
+  const { id } = await params
 
   const [product, categories] = await Promise.all([
-    getProduct(params.id),
+    getProduct(id),
     getCategories(),
   ])
 
