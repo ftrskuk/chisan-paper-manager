@@ -8,6 +8,7 @@ import {
   type ProductFormData,
   type CategoryFormData,
 } from '@/lib/validations/product'
+import { buildSpecsForInsert } from '@/utils/product-helpers'
 import { revalidatePath } from 'next/cache'
 
 export async function createProduct(data: ProductFormData) {
@@ -33,16 +34,7 @@ export async function createProduct(data: ProductFormData) {
     throw new Error(productError.message, { cause: productError })
   }
 
-  const specsToInsert = validated.specs.map((spec) => ({
-    product_id: product.id,
-    gsm: spec.gsm,
-    caliper: spec.caliper,
-    tensile_md: spec.tensile_md ?? null,
-    tensile_cd: spec.tensile_cd ?? null,
-    tear_md: spec.tear_md ?? null,
-    tear_cd: spec.tear_cd ?? null,
-    extra_specs: spec.extra_specs,
-  }))
+  const specsToInsert = buildSpecsForInsert(product.id, validated.specs)
 
   const { error: specsError } = await supabase
     .from('product_specs')
@@ -77,16 +69,7 @@ export async function updateProduct(productId: string, data: ProductFormData) {
 
   await supabase.from('product_specs').delete().eq('product_id', productId)
 
-  const specsToInsert = validated.specs.map((spec) => ({
-    product_id: productId,
-    gsm: spec.gsm,
-    caliper: spec.caliper,
-    tensile_md: spec.tensile_md ?? null,
-    tensile_cd: spec.tensile_cd ?? null,
-    tear_md: spec.tear_md ?? null,
-    tear_cd: spec.tear_cd ?? null,
-    extra_specs: spec.extra_specs,
-  }))
+  const specsToInsert = buildSpecsForInsert(productId, validated.specs)
 
   const { error: specsError } = await supabase
     .from('product_specs')
