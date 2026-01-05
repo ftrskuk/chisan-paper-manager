@@ -1,6 +1,7 @@
 'use client'
 
 import { useProductForm } from './use-product-form'
+import { SpecVariantForm } from './spec-variant-form'
 import type { ProductFormData } from '@/lib/validations/product'
 import type { Category } from '@/types/database'
 
@@ -112,209 +113,22 @@ export function ProductForm({
         </div>
 
         {fields.map((field, index) => (
-          <div
+          <SpecVariantForm
             key={field.id}
-            className="p-6 border border-gray-200 rounded-xl bg-gray-50/50 hover:bg-white hover:shadow-md transition-all duration-200 space-y-6"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
-                  {index + 1}
-                </span>
-                <h4 className="font-medium text-gray-900">Variant Details</h4>
-              </div>
-              {fields.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => handleRemoveSpec(index)}
-                  className="text-red-600 hover:text-red-800 text-sm font-medium px-2 py-1 hover:bg-red-50 rounded transition-colors"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                  GSM (g/m²)
-                </label>
-                <input
-                  type="number"
-                  {...register(`specs.${index}.gsm`, { valueAsNumber: true })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors bg-white"
-                  placeholder="100"
-                />
-                {errors.specs?.[index]?.gsm && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {errors.specs[index]?.gsm?.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                  Caliper (µm)
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  {...register(`specs.${index}.caliper`, {
-                    valueAsNumber: true,
-                  })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  placeholder="150"
-                />
-                {errors.specs?.[index]?.caliper && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {errors.specs[index]?.caliper?.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                  Tensile MD (kN/m)
-                </label>
-                <input
-                  type="number"
-                  step="0.001"
-                  {...register(`specs.${index}.tensile_md`, {
-                    valueAsNumber: true,
-                  })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  placeholder="5.5"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                  Tensile CD (kN/m)
-                </label>
-                <input
-                  type="number"
-                  step="0.001"
-                  {...register(`specs.${index}.tensile_cd`, {
-                    valueAsNumber: true,
-                  })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  placeholder="4.2"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                  Tear MD (mN)
-                </label>
-                <input
-                  type="number"
-                  step="1"
-                  {...register(`specs.${index}.tear_md`, {
-                    valueAsNumber: true,
-                  })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  placeholder="800"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                  Tear CD (mN)
-                </label>
-                <input
-                  type="number"
-                  step="1"
-                  {...register(`specs.${index}.tear_cd`, {
-                    valueAsNumber: true,
-                  })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  placeholder="900"
-                />
-              </div>
-            </div>
-
-            <div className="border-t border-gray-200 pt-4 mt-4">
-              <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
-                  Extra Specifications
-                </label>
-                <button
-                  type="button"
-                  onClick={() => addExtraSpec(index)}
-                  className="px-3 py-1.5 text-xs font-medium bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm"
-                >
-                  + Add Custom Field
-                </button>
-              </div>
-
-              {extraSpecsPerSpec[index]?.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {extraSpecsPerSpec[index].map((extra, extraIndex) => (
-                    <div
-                      key={extraIndex}
-                      className="flex gap-0 shadow-sm rounded-md group hover:shadow-md transition-shadow"
-                    >
-                      <input
-                        type="text"
-                        placeholder="Key (e.g., moisture)"
-                        value={extra.key}
-                        onChange={(e) =>
-                          updateExtraSpec(
-                            index,
-                            extraIndex,
-                            'key',
-                            e.target.value
-                          )
-                        }
-                        className="flex-1 min-w-0 px-3 py-2 text-sm border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:z-10 bg-gray-50 font-medium text-gray-700 placeholder-gray-400"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Value (e.g., 7%)"
-                        value={extra.value}
-                        onChange={(e) =>
-                          updateExtraSpec(
-                            index,
-                            extraIndex,
-                            'value',
-                            e.target.value
-                          )
-                        }
-                        className="flex-1 min-w-0 px-3 py-2 text-sm border-l-0 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:z-10 bg-white placeholder-gray-400"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeExtraSpec(index, extraIndex)}
-                        className="px-3 py-2 text-gray-400 hover:text-red-600 border border-l-0 border-gray-300 rounded-r-md hover:bg-red-50 transition-colors focus:z-10 bg-white"
-                        title="Remove field"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                  <p className="text-sm text-gray-500">
-                    No extra specifications added yet.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+            index={index}
+            register={register}
+            errors={errors}
+            extraSpecs={extraSpecsPerSpec[index] || []}
+            showRemove={fields.length > 1}
+            onRemove={() => handleRemoveSpec(index)}
+            onAddExtraSpec={() => addExtraSpec(index)}
+            onRemoveExtraSpec={(extraIndex) =>
+              removeExtraSpec(index, extraIndex)
+            }
+            onUpdateExtraSpec={(extraIndex, field, value) =>
+              updateExtraSpec(index, extraIndex, field, value)
+            }
+          />
         ))}
 
         {errors.specs && !Array.isArray(errors.specs) && (

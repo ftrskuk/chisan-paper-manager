@@ -4,7 +4,7 @@
   "status": "in_progress",
   "current_phase": "phase_1",
   "current_step": null,
-  "completed_steps": ["step_1"],
+  "completed_steps": ["step_1", "step_2"],
   "steps": {
     "step_1": {
       "name": "Specs 삽입 유틸리티 추출",
@@ -16,52 +16,53 @@
         "utils/product-helpers.test.ts"
       ],
       "files_modified": ["lib/actions/product.ts", "tsconfig.json"],
-      "estimated_time": "30-45분",
       "actual_time": "~15분"
     },
     "step_2": {
       "name": "ProductForm 컴포넌트 분리",
       "priority": "high",
-      "status": "pending",
-      "files_to_create": [
+      "status": "completed",
+      "completed_at": "2026-01-05",
+      "files_created": [
         "components/products/spec-variant-form.tsx",
         "components/products/spec-variant-form.test.tsx",
         "components/products/extra-specs-form.tsx",
         "components/products/extra-specs-form.test.tsx"
       ],
-      "files_to_modify": ["components/products/product-form.tsx"],
-      "estimated_time": "1-2시간"
+      "files_modified": ["components/products/product-form.tsx"],
+      "actual_time": "~20분",
+      "notes": "ProductForm 365줄 → 178줄, 테스트 26개 추가"
     },
     "step_3": {
-      "name": "서버 액션 테스트 추가",
-      "priority": "high",
-      "status": "pending",
-      "files_to_create": ["lib/actions/product.test.ts"],
-      "files_to_modify": [],
-      "estimated_time": "1-1.5시간"
-    },
-    "step_4": {
-      "name": "성능 최적화 - Memoization",
+      "name": "데이터 변환 로직 추출 및 테스트",
       "priority": "medium",
       "status": "pending",
-      "files_to_create": [],
-      "files_to_modify": [
-        "components/products/product-form.tsx",
-        "components/products/products-table.tsx"
+      "description": "순수 데이터 변환 함수 추출하여 단위 테스트 가능하게 함",
+      "files_to_create": [
+        "lib/utils/product-transformations.ts",
+        "lib/utils/product-transformations.test.ts"
       ],
+      "files_to_modify": ["components/products/use-product-form.ts"],
       "estimated_time": "30분"
+    },
+    "step_4": {
+      "name": "SpecVariantForm memo 적용",
+      "priority": "low",
+      "status": "pending",
+      "description": "리스트 렌더링 최적화를 위해 memo 적용",
+      "files_to_create": [],
+      "files_to_modify": ["components/products/spec-variant-form.tsx"],
+      "estimated_time": "20분"
     }
   },
   "metrics": {
     "current": {
-      "max_file_lines": 365,
-      "code_duplication": "~20%",
-      "test_coverage": "~45%"
+      "max_file_lines": 178,
+      "component_tests": 26
     },
     "target": {
       "max_file_lines": 180,
-      "code_duplication": "<5%",
-      "test_coverage": "80%+"
+      "test_coverage": "70%+"
     }
   }
 }
