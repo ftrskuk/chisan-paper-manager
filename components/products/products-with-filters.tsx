@@ -3,17 +3,22 @@
 import { useState } from 'react'
 import { ProductsTable } from './products-table'
 import { ProductFilters } from './product-filters'
-import type { ProductFilters as ProductFiltersType, FilterOption } from '@/types/filters'
-import type { ProductSpec } from '@/types/database'
+import type {
+  ProductFilters as ProductFiltersType,
+  FilterOption,
+} from '@/types/filters'
+import type { ProductSpec, Category } from '@/types/database'
 
 interface ProductWithRelations {
   id: string
   mill_name: string
   name: string
   category_id: string | null
+  file_url: string | null
+  created_by: string | null
   created_at: string
-  created_by: string
-  categories: { id: string; name: string } | null
+  updated_at: string
+  categories: Category | null
   product_specs: ProductSpec[]
 }
 
@@ -139,7 +144,9 @@ function applyFiltersToProducts(
     filtered = filtered
       .filter((product) => {
         // Product must have at least one spec that matches
-        return product.product_specs.some((spec) => matchesSpecFilters(spec, filters))
+        return product.product_specs.some((spec) =>
+          matchesSpecFilters(spec, filters)
+        )
       })
       .map((product) => ({
         ...product,
@@ -181,7 +188,10 @@ function hasSpecFilters(filters: ProductFiltersType): boolean {
   )
 }
 
-function matchesSpecFilters(spec: ProductSpec, filters: ProductFiltersType): boolean {
+function matchesSpecFilters(
+  spec: ProductSpec,
+  filters: ProductFiltersType
+): boolean {
   // GSM range
   if (filters.gsmMin !== undefined && spec.gsm < filters.gsmMin) return false
   if (filters.gsmMax !== undefined && spec.gsm > filters.gsmMax) return false

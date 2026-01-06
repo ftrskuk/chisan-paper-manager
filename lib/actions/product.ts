@@ -11,6 +11,7 @@ import {
 import { buildSpecsForInsert } from '@/utils/product-helpers'
 import { revalidatePath } from 'next/cache'
 import type { ProductFilters } from '@/types/filters'
+import type { ProductSpec } from '@/types/database'
 
 export async function createProduct(data: ProductFormData) {
   await requireAdmin()
@@ -100,15 +101,13 @@ export async function deleteProduct(productId: string) {
 export async function getProducts(filters?: ProductFilters) {
   const supabase = await createClient()
 
-  let query = supabase
-    .from('products')
-    .select(
-      `
+  let query = supabase.from('products').select(
+    `
       *,
       categories (id, name),
       product_specs (*)
     `
-    )
+  )
 
   // Apply text search filter on product name and mill name
   if (filters?.search) {
@@ -145,13 +144,15 @@ export async function getProducts(filters?: ProductFilters) {
   if (hasSpecFilters(filters)) {
     filteredData = data.filter((product) => {
       // Product must have at least one spec that matches all filters
-      return product.product_specs.some((spec) => matchesSpecFilters(spec, filters))
+      return product.product_specs.some((spec: ProductSpec) =>
+        matchesSpecFilters(spec, filters)
+      )
     })
 
     // Also filter the specs within each product
     filteredData = filteredData.map((product) => ({
       ...product,
-      product_specs: product.product_specs.filter((spec) =>
+      product_specs: product.product_specs.filter((spec: ProductSpec) =>
         matchesSpecFilters(spec, filters)
       ),
     }))
@@ -190,7 +191,10 @@ function hasSpecFilters(filters?: ProductFilters): boolean {
   )
 }
 
-function matchesSpecFilters(spec: any, filters?: ProductFilters): boolean {
+function matchesSpecFilters(
+  spec: ProductSpec,
+  filters?: ProductFilters
+): boolean {
   if (!filters) return true
 
   // GSM range
@@ -198,48 +202,136 @@ function matchesSpecFilters(spec: any, filters?: ProductFilters): boolean {
   if (filters.gsmMax !== undefined && spec.gsm > filters.gsmMax) return false
 
   // Brightness range
-  if (filters.brightnessMin !== undefined && (spec.brightness === null || spec.brightness < filters.brightnessMin)) return false
-  if (filters.brightnessMax !== undefined && (spec.brightness === null || spec.brightness > filters.brightnessMax)) return false
+  if (
+    filters.brightnessMin !== undefined &&
+    (spec.brightness === null || spec.brightness < filters.brightnessMin)
+  )
+    return false
+  if (
+    filters.brightnessMax !== undefined &&
+    (spec.brightness === null || spec.brightness > filters.brightnessMax)
+  )
+    return false
 
   // Opacity range
-  if (filters.opacityMin !== undefined && (spec.opacity === null || spec.opacity < filters.opacityMin)) return false
-  if (filters.opacityMax !== undefined && (spec.opacity === null || spec.opacity > filters.opacityMax)) return false
+  if (
+    filters.opacityMin !== undefined &&
+    (spec.opacity === null || spec.opacity < filters.opacityMin)
+  )
+    return false
+  if (
+    filters.opacityMax !== undefined &&
+    (spec.opacity === null || spec.opacity > filters.opacityMax)
+  )
+    return false
 
   // Caliper range
-  if (filters.caliperMin !== undefined && (spec.caliper === null || spec.caliper < filters.caliperMin)) return false
-  if (filters.caliperMax !== undefined && (spec.caliper === null || spec.caliper > filters.caliperMax)) return false
+  if (
+    filters.caliperMin !== undefined &&
+    (spec.caliper === null || spec.caliper < filters.caliperMin)
+  )
+    return false
+  if (
+    filters.caliperMax !== undefined &&
+    (spec.caliper === null || spec.caliper > filters.caliperMax)
+  )
+    return false
 
   // Density range
-  if (filters.densityMin !== undefined && (spec.density === null || spec.density < filters.densityMin)) return false
-  if (filters.densityMax !== undefined && (spec.density === null || spec.density > filters.densityMax)) return false
+  if (
+    filters.densityMin !== undefined &&
+    (spec.density === null || spec.density < filters.densityMin)
+  )
+    return false
+  if (
+    filters.densityMax !== undefined &&
+    (spec.density === null || spec.density > filters.densityMax)
+  )
+    return false
 
   // Tensile MD range
-  if (filters.tensileMdMin !== undefined && (spec.tensile_md === null || spec.tensile_md < filters.tensileMdMin)) return false
-  if (filters.tensileMdMax !== undefined && (spec.tensile_md === null || spec.tensile_md > filters.tensileMdMax)) return false
+  if (
+    filters.tensileMdMin !== undefined &&
+    (spec.tensile_md === null || spec.tensile_md < filters.tensileMdMin)
+  )
+    return false
+  if (
+    filters.tensileMdMax !== undefined &&
+    (spec.tensile_md === null || spec.tensile_md > filters.tensileMdMax)
+  )
+    return false
 
   // Tensile CD range
-  if (filters.tensileCdMin !== undefined && (spec.tensile_cd === null || spec.tensile_cd < filters.tensileCdMin)) return false
-  if (filters.tensileCdMax !== undefined && (spec.tensile_cd === null || spec.tensile_cd > filters.tensileCdMax)) return false
+  if (
+    filters.tensileCdMin !== undefined &&
+    (spec.tensile_cd === null || spec.tensile_cd < filters.tensileCdMin)
+  )
+    return false
+  if (
+    filters.tensileCdMax !== undefined &&
+    (spec.tensile_cd === null || spec.tensile_cd > filters.tensileCdMax)
+  )
+    return false
 
   // Tear MD range
-  if (filters.tearMdMin !== undefined && (spec.tear_md === null || spec.tear_md < filters.tearMdMin)) return false
-  if (filters.tearMdMax !== undefined && (spec.tear_md === null || spec.tear_md > filters.tearMdMax)) return false
+  if (
+    filters.tearMdMin !== undefined &&
+    (spec.tear_md === null || spec.tear_md < filters.tearMdMin)
+  )
+    return false
+  if (
+    filters.tearMdMax !== undefined &&
+    (spec.tear_md === null || spec.tear_md > filters.tearMdMax)
+  )
+    return false
 
   // Tear CD range
-  if (filters.tearCdMin !== undefined && (spec.tear_cd === null || spec.tear_cd < filters.tearCdMin)) return false
-  if (filters.tearCdMax !== undefined && (spec.tear_cd === null || spec.tear_cd > filters.tearCdMax)) return false
+  if (
+    filters.tearCdMin !== undefined &&
+    (spec.tear_cd === null || spec.tear_cd < filters.tearCdMin)
+  )
+    return false
+  if (
+    filters.tearCdMax !== undefined &&
+    (spec.tear_cd === null || spec.tear_cd > filters.tearCdMax)
+  )
+    return false
 
   // Smoothness range
-  if (filters.smoothnessMin !== undefined && (spec.smoothness === null || spec.smoothness < filters.smoothnessMin)) return false
-  if (filters.smoothnessMax !== undefined && (spec.smoothness === null || spec.smoothness > filters.smoothnessMax)) return false
+  if (
+    filters.smoothnessMin !== undefined &&
+    (spec.smoothness === null || spec.smoothness < filters.smoothnessMin)
+  )
+    return false
+  if (
+    filters.smoothnessMax !== undefined &&
+    (spec.smoothness === null || spec.smoothness > filters.smoothnessMax)
+  )
+    return false
 
   // Cobb 60 range
-  if (filters.cobb60Min !== undefined && (spec.cobb_60 === null || spec.cobb_60 < filters.cobb60Min)) return false
-  if (filters.cobb60Max !== undefined && (spec.cobb_60 === null || spec.cobb_60 > filters.cobb60Max)) return false
+  if (
+    filters.cobb60Min !== undefined &&
+    (spec.cobb_60 === null || spec.cobb_60 < filters.cobb60Min)
+  )
+    return false
+  if (
+    filters.cobb60Max !== undefined &&
+    (spec.cobb_60 === null || spec.cobb_60 > filters.cobb60Max)
+  )
+    return false
 
   // Moisture range
-  if (filters.moistureMin !== undefined && (spec.moisture === null || spec.moisture < filters.moistureMin)) return false
-  if (filters.moistureMax !== undefined && (spec.moisture === null || spec.moisture > filters.moistureMax)) return false
+  if (
+    filters.moistureMin !== undefined &&
+    (spec.moisture === null || spec.moisture < filters.moistureMin)
+  )
+    return false
+  if (
+    filters.moistureMax !== undefined &&
+    (spec.moisture === null || spec.moisture > filters.moistureMax)
+  )
+    return false
 
   return true
 }
