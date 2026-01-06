@@ -1,12 +1,28 @@
 import Link from 'next/link'
-import { getProducts } from '@/lib/actions/product'
+import { getProducts, getCategories, getUniqueMills } from '@/lib/actions/product'
 import { getProfile, isAdmin } from '@/lib/auth'
-import { ProductsTable } from '@/components/products/products-table'
+import { ProductsWithFilters } from '@/components/products/products-with-filters'
 
 export default async function ProductsPage() {
-  const [products, profile] = await Promise.all([getProducts(), getProfile()])
+  const [products, categories, mills, profile] = await Promise.all([
+    getProducts(),
+    getCategories(),
+    getUniqueMills(),
+    getProfile(),
+  ])
 
   const admin = isAdmin(profile)
+
+  // Prepare filter options
+  const categoryOptions = categories.map((cat) => ({
+    label: cat.name,
+    value: cat.id,
+  }))
+
+  const millOptions = mills.map((mill) => ({
+    label: mill,
+    value: mill,
+  }))
 
   return (
     <div>
@@ -43,7 +59,12 @@ export default async function ProductsPage() {
           )}
         </div>
       ) : (
-        <ProductsTable products={products} isAdmin={admin} />
+        <ProductsWithFilters
+          initialProducts={products}
+          categories={categoryOptions}
+          mills={millOptions}
+          isAdmin={admin}
+        />
       )}
     </div>
   )
