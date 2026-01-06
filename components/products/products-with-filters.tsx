@@ -4,16 +4,10 @@ import { useState } from 'react'
 import { ProductsTable } from './products-table'
 import { ProductFilters } from './product-filters'
 import type { ProductFilters as ProductFiltersType, FilterOption } from '@/types/filters'
-import type { ProductSpec } from '@/types/database'
+import type { ProductWithSpecs, ProductSpec, Category } from '@/types/database'
 
-interface ProductWithRelations {
-  id: string
-  mill_name: string
-  name: string
-  category_id: string | null
-  created_at: string
-  created_by: string
-  categories: { id: string; name: string } | null
+interface ProductWithRelations extends ProductWithSpecs {
+  categories: Category | null
   product_specs: ProductSpec[]
 }
 
