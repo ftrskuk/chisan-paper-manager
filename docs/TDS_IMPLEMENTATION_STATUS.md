@@ -232,3 +232,34 @@ npm run dev
 # Test spec detail sidebar
 # Navigate to /products → expand product → click GSM number
 ```
+
+---
+
+## Refinements: Standardization & UX (2026-01-05)
+
+### 1. TDS Unit Standardization
+
+- **Problem**: TDS parsing was accepting units as-is from PDFs (e.g., mm, mil), leading to mixed units in the database and charts.
+- **Solution**: Implemented immediate conversion in `lib/ai/tds-parser.ts` using `utils/unit-converters.ts`.
+- **Standard Units Enforced**:
+  - **Thickness**: µm (converts from mm, mil, inch)
+  - **Tensile**: kN/m (converts from kgf/15mm, N/15mm, lb/in)
+  - **Tear**: mN (converts from gf, cN)
+  - **Stiffness**: mN·m (converts from gf·cm, mN·mm)
+
+### 2. Dashboard Interaction Separation
+
+- **Problem**: Ambiguous click target between "Select for Compare" and "View Details" in the products table spec list.
+- **Solution**:
+  - Updated `components/products/products-table.tsx`.
+  - **Checkbox**: Strictly for toggling selection for comparison.
+  - **Info Icon**: Distinct button to open the Spec Detail Sidebar.
+  - Improved visual layout of the spec chips in the expanded row.
+
+### 3. Comparison Chart Improvements
+
+- **Problem**: Missing data points caused empty gaps in charts, and Stiffness data was missing from comparisons.
+- **Solution**:
+  - Updated `components/products/comparison-charts.tsx`.
+  - **Zero Defaulting**: Null values now default to `0` to ensure chart continuity.
+  - **New Metrics**: Added Stiffness (MD/CD) to the comparison visualization.

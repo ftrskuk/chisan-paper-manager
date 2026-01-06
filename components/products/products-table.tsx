@@ -259,30 +259,49 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                             .map((spec) => (
                               <div
                                 key={spec.id}
-                                className={`inline-flex items-center px-3 py-1.5 rounded border transition-colors ${
+                                className={`inline-flex items-center rounded border transition-colors overflow-hidden ${
                                   isSpecSelected(spec.id)
-                                    ? 'bg-blue-100 border-blue-400 text-blue-800'
-                                    : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
+                                    ? 'bg-blue-50 border-blue-400'
+                                    : 'bg-white border-gray-300 hover:border-gray-400'
                                 } ${selectedSpecs.size >= 10 && !isSpecSelected(spec.id) ? 'opacity-50' : ''}`}
                               >
-                                <input
-                                  type="checkbox"
-                                  checked={isSpecSelected(spec.id)}
-                                  onChange={() =>
-                                    toggleSpecSelection(product, spec)
-                                  }
-                                  disabled={
-                                    selectedSpecs.size >= 10 &&
-                                    !isSpecSelected(spec.id)
-                                  }
-                                  className="mr-2 cursor-pointer"
-                                />
+                                <label className="flex items-center px-3 py-1.5 cursor-pointer hover:bg-gray-100 border-r border-gray-200">
+                                  <input
+                                    type="checkbox"
+                                    checked={isSpecSelected(spec.id)}
+                                    onChange={() =>
+                                      toggleSpecSelection(product, spec)
+                                    }
+                                    disabled={
+                                      selectedSpecs.size >= 10 &&
+                                      !isSpecSelected(spec.id)
+                                    }
+                                    className="cursor-pointer mr-2"
+                                  />
+                                  <span className="text-sm font-medium text-gray-700">
+                                    {spec.gsm}g
+                                  </span>
+                                </label>
                                 <button
                                   type="button"
                                   onClick={() => openSidebar(product, spec)}
-                                  className="hover:underline cursor-pointer"
+                                  className="px-2 py-1.5 hover:bg-gray-100 text-gray-500 hover:text-blue-600 transition-colors"
+                                  title="View Details"
                                 >
-                                  {spec.gsm}g
+                                  <span className="sr-only">View Details</span>
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                  </svg>
                                 </button>
                               </div>
                             ))}

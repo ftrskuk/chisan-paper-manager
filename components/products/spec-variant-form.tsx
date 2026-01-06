@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import type { UseFormRegister, FieldErrors } from 'react-hook-form'
 import type { ProductFormData } from '@/lib/validations/product'
 import { ExtraSpecsForm } from './extra-specs-form'
@@ -22,7 +23,7 @@ interface SpecVariantFormProps {
   ) => void
 }
 
-export function SpecVariantForm({
+export const SpecVariantForm = memo(function SpecVariantForm({
   index,
   register,
   errors,
@@ -174,4 +175,4 @@ export function SpecVariantForm({
       />
     </div>
   )
-}
+})

@@ -10,6 +10,7 @@ import {
   productFormSchema,
   type ProductFormData,
 } from '@/lib/validations/product'
+import { transformExtraSpecsToRecord } from '@/utils/product-transformations'
 
 interface UseProductFormProps {
   defaultValues?: Partial<ProductFormData>
@@ -65,17 +66,9 @@ export function useProductForm({
         ...data,
         specs: data.specs.map((spec, index) => ({
           ...spec,
-          extra_specs:
-            extraSpecsPerSpec[index]?.reduce(
-              (acc, { key, value }) => {
-                if (key.trim()) {
-                  const numValue = parseFloat(value)
-                  acc[key.trim()] = isNaN(numValue) ? value : numValue
-                }
-                return acc
-              },
-              {} as Record<string, unknown>
-            ) || {},
+          extra_specs: transformExtraSpecsToRecord(
+            extraSpecsPerSpec[index] || []
+          ),
         })),
       }
       await onSubmit(dataWithExtraSpecs)

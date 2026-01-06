@@ -69,6 +69,43 @@ describe('parseTDSDocument', () => {
     })
   })
 
+  it('converts units to standard units', async () => {
+    const mockResponse = {
+      mill_name: 'Test Mill',
+      product_name: 'Test Product',
+      category_hint: 'Kraft',
+      specs: [
+        {
+          gsm: 100,
+          caliper: { value: 0.12, unit: 'mm' }, // Should convert to 120 µm
+          tensile_md: { value: 1000, unit: 'N/15mm' }, // Should convert to ~6.67 kN/m
+          tear_md: { value: 10, unit: 'gf' }, // Should convert to ~98.07 mN
+        },
+      ],
+    }
+
+    mocks.create.mockResolvedValue({
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(mockResponse),
+        },
+      ],
+    })
+
+    const result = await parseTDSDocument('base64data')
+    const spec = result.specs[0]
+
+    expect(spec.caliper).toEqual({ value: 120, unit: 'µm' })
+    // 1000 N/15mm -> 1000 * (1 / 0.015 / 1000) = 66.67
+    expect(spec.tensile_md?.unit).toBe('kN/m')
+    expect(spec.tensile_md?.value).toBeCloseTo(66.67, 1)
+
+    // 10 gf -> 10 * 9.80665 = 98.07
+    expect(spec.tear_md?.unit).toBe('mN')
+    expect(spec.tear_md?.value).toBeCloseTo(98.07, 1)
+  })
+
   it('throws error if API key is missing', async () => {
     delete process.env.ANTHROPIC_API_KEY
     await expect(parseTDSDocument('data')).rejects.toThrow(
@@ -166,6 +203,8 @@ describe('parseTDSDocument', () => {
 
     const result = await parseTDSDocument('data')
     expect(result.specs[0].caliper).toBeUndefined()
+    // The invalid unit tensile should be preserved as-is with fallback or caught by warning and preserved
+    expect(result.specs[0].tensile_md).toEqual({ value: 5, unit: 'invalid' })
   })
 
   it('throws error when no text response from Claude', async () => {

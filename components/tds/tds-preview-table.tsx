@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
-import { Trash2, Plus } from 'lucide-react'
+import { Trash2, Plus, ChevronDown, ChevronUp, Code, X } from 'lucide-react'
 import { tdsProductFormSchema } from '@/lib/validations/product'
 import type { TDSProductFormData } from '@/lib/validations/product'
 import type { TDSParseResult, Category } from '@/types/database'
@@ -27,6 +27,20 @@ interface FlatSpec {
   tear_cd_value: number | null
   brightness: number | null
   cobb_60: number | null
+  smoothness_value: number | null
+  smoothness_unit: string
+  smoothness_method: string
+  stiffness_md_value: number | null
+  stiffness_cd_value: number | null
+  whiteness: number | null
+  density: number | null
+  opacity: number | null
+  moisture: number | null
+}
+
+interface ExtraSpecItem {
+  key: string
+  value: string
 }
 
 interface FormValues {
@@ -35,7 +49,12 @@ interface FormValues {
   category_id: string
   file_url: string
   specs: FlatSpec[]
+  extra_specs: ExtraSpecItem[]
 }
+
+const SMOOTHNESS_UNITS = ['sec', 'ml/min', 'µm']
+const SMOOTHNESS_METHODS = ['Bekk', 'Bendtsen', 'PPS']
+const STIFFNESS_UNIT = 'mN·m'
 
 export function TDSPreviewTable({
   parsedData,
@@ -47,6 +66,7 @@ export function TDSPreviewTable({
 }: TDSPreviewTableProps) {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [validationError, setValidationError] = useState<string | null>(null)
+  const [showExtraSpecs, setShowExtraSpecs] = useState(false)
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -64,7 +84,23 @@ export function TDSPreviewTable({
         tear_cd_value: spec.tear_cd?.value ?? null,
         brightness: spec.brightness ?? null,
         cobb_60: spec.cobb_60 ?? null,
+        smoothness_value: spec.smoothness?.value ?? null,
+        smoothness_unit: spec.smoothness?.unit ?? 'sec',
+        smoothness_method: spec.smoothness?.method ?? 'Bekk',
+        stiffness_md_value: spec.stiffness_md?.value ?? null,
+        stiffness_cd_value: spec.stiffness_cd?.value ?? null,
+        whiteness: null,
+        density: null,
+        opacity: spec.opacity ?? null,
+        moisture: spec.moisture ?? null,
       })),
+      extra_specs:
+        Object.entries(parsedData.specs[0]?.extra_specs || {}).map(
+          ([key, value]) => ({
+            key,
+            value: String(value),
+          })
+        ) || [],
     },
   })
 
@@ -73,7 +109,23 @@ export function TDSPreviewTable({
     name: 'specs',
   })
 
+  const {
+    fields: extraSpecFields,
+    append: appendExtraSpec,
+    remove: removeExtraSpec,
+  } = useFieldArray({
+    control: form.control,
+    name: 'extra_specs',
+  })
+
   const convertFormToTDSData = (data: FormValues): TDSProductFormData => {
+    const extraSpecsRecord: Record<string, unknown> = {}
+    data.extra_specs.forEach((item) => {
+      if (item.key.trim()) {
+        extraSpecsRecord[item.key.trim()] = item.value
+      }
+    })
+
     return {
       mill_name: data.mill_name.trim(),
       product_name: data.product_name.trim(),
@@ -104,19 +156,42 @@ export function TDSPreviewTable({
           spec.tear_cd_value != null && !isNaN(spec.tear_cd_value)
             ? { value: spec.tear_cd_value, unit: 'mN' as const }
             : null,
-        smoothness: null,
-        stiffness_md: null,
-        stiffness_cd: null,
+        smoothness:
+          spec.smoothness_value != null && !isNaN(spec.smoothness_value)
+            ? {
+                value: spec.smoothness_value,
+                unit: spec.smoothness_unit as 'sec' | 'ml/min' | 'µm',
+                method: spec.smoothness_method as 'Bekk' | 'Bendtsen' | 'PPS',
+              }
+            : null,
+        stiffness_md:
+          spec.stiffness_md_value != null && !isNaN(spec.stiffness_md_value)
+            ? { value: spec.stiffness_md_value, unit: 'mN·m' as const }
+            : null,
+        stiffness_cd:
+          spec.stiffness_cd_value != null && !isNaN(spec.stiffness_cd_value)
+            ? { value: spec.stiffness_cd_value, unit: 'mN·m' as const }
+            : null,
         brightness:
           spec.brightness != null && !isNaN(spec.brightness)
             ? spec.brightness
             : null,
         cobb_60:
           spec.cobb_60 != null && !isNaN(spec.cobb_60) ? spec.cobb_60 : null,
-        density: null,
-        opacity: null,
-        moisture: null,
-        extra_specs: {},
+        density:
+          spec.density != null && !isNaN(spec.density) ? spec.density : null,
+        opacity:
+          spec.opacity != null && !isNaN(spec.opacity)
+            ? Math.min(100, Math.max(0, spec.opacity))
+            : null,
+        moisture:
+          spec.moisture != null && !isNaN(spec.moisture)
+            ? Math.min(100, Math.max(0, spec.moisture))
+            : null,
+        extra_specs:
+          Object.keys(extraSpecsRecord).length > 0
+            ? extraSpecsRecord
+            : undefined,
       })),
     }
   }
@@ -154,7 +229,20 @@ export function TDSPreviewTable({
       tear_cd_value: null,
       brightness: null,
       cobb_60: null,
+      smoothness_value: null,
+      smoothness_unit: 'sec',
+      smoothness_method: 'Bekk',
+      stiffness_md_value: null,
+      stiffness_cd_value: null,
+      whiteness: null,
+      density: null,
+      opacity: null,
+      moisture: null,
     })
+  }
+
+  const addExtraSpec = () => {
+    appendExtraSpec({ key: '', value: '' })
   }
 
   const parseNumber = (v: string): number | null => {
@@ -209,44 +297,74 @@ export function TDSPreviewTable({
           <h3 className="font-medium text-gray-900">
             Specifications ({fields.length} GSM variants)
           </h3>
-          <button
-            type="button"
-            onClick={addSpec}
-            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
-          >
-            <Plus className="w-4 h-4" /> Add Row
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowExtraSpecs(!showExtraSpecs)}
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+            >
+              <Code className="w-4 h-4" />
+              Extra Specs
+              {showExtraSpecs ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={addSpec}
+              className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+            >
+              <Plus className="w-4 h-4" /> Add Row
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-3 py-2 text-left font-medium text-gray-600">
+                <th className="px-3 py-2 text-left font-medium text-gray-600 w-16">
                   GSM
                 </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600">
+                <th className="px-3 py-2 text-left font-medium text-gray-600 w-28">
                   Caliper
                 </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600">
+                <th className="px-3 py-2 text-left font-medium text-gray-600 w-24">
                   Tensile MD
                 </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600">
+                <th className="px-3 py-2 text-left font-medium text-gray-600 w-24">
                   Tensile CD
                 </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600">
+                <th className="px-3 py-2 text-left font-medium text-gray-600 w-20">
                   Tear MD
                 </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600">
+                <th className="px-3 py-2 text-left font-medium text-gray-600 w-20">
                   Tear CD
                 </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600">
+                <th className="px-3 py-2 text-left font-medium text-gray-600 w-20">
                   Brightness
                 </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600">
+                <th className="px-3 py-2 text-left font-medium text-gray-600 w-20">
                   Cobb 60
                 </th>
-                <th className="px-3 py-2 text-center font-medium text-gray-600">
+                <th className="px-3 py-2 text-left font-medium text-gray-600 w-36">
+                  Smoothness
+                </th>
+                <th className="px-3 py-2 text-left font-medium text-gray-600 w-28">
+                  Stiffness MD
+                </th>
+                <th className="px-3 py-2 text-left font-medium text-gray-600 w-28">
+                  Stiffness CD
+                </th>
+                <th className="px-3 py-2 text-left font-medium text-gray-600 w-20">
+                  Opacity
+                </th>
+                <th className="px-3 py-2 text-left font-medium text-gray-600 w-20">
+                  Moisture
+                </th>
+                <th className="px-3 py-2 text-center font-medium text-gray-600 w-12">
                   Actions
                 </th>
               </tr>
@@ -272,7 +390,7 @@ export function TDSPreviewTable({
                         {...form.register(`specs.${index}.caliper_value`, {
                           setValueAs: parseNumber,
                         })}
-                        className="w-20 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
+                        className="w-16 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
                       />
                       <select
                         {...form.register(`specs.${index}.caliper_unit`)}
@@ -313,7 +431,7 @@ export function TDSPreviewTable({
                       {...form.register(`specs.${index}.tear_md_value`, {
                         setValueAs: parseNumber,
                       })}
-                      className="w-20 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
+                      className="w-16 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
                       placeholder="-"
                     />
                   </td>
@@ -324,7 +442,7 @@ export function TDSPreviewTable({
                       {...form.register(`specs.${index}.tear_cd_value`, {
                         setValueAs: parseNumber,
                       })}
-                      className="w-20 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
+                      className="w-16 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
                       placeholder="-"
                     />
                   </td>
@@ -332,6 +450,8 @@ export function TDSPreviewTable({
                     <input
                       type="number"
                       step="any"
+                      min="0"
+                      max="100"
                       {...form.register(`specs.${index}.brightness`, {
                         setValueAs: parseNumber,
                       })}
@@ -344,6 +464,89 @@ export function TDSPreviewTable({
                       type="number"
                       step="any"
                       {...form.register(`specs.${index}.cobb_60`, {
+                        setValueAs: parseNumber,
+                      })}
+                      className="w-16 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
+                      placeholder="-"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          step="any"
+                          {...form.register(`specs.${index}.smoothness_value`, {
+                            setValueAs: parseNumber,
+                          })}
+                          className="w-14 px-1 py-1 border rounded focus:ring-1 focus:ring-blue-500"
+                          placeholder="-"
+                        />
+                        <select
+                          {...form.register(`specs.${index}.smoothness_unit`)}
+                          className="px-1 py-1 border rounded text-xs w-14"
+                        >
+                          {SMOOTHNESS_UNITS.map((unit) => (
+                            <option key={unit} value={unit}>
+                              {unit}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <select
+                        {...form.register(`specs.${index}.smoothness_method`)}
+                        className="px-1 py-1 border rounded text-xs w-full"
+                      >
+                        {SMOOTHNESS_METHODS.map((method) => (
+                          <option key={method} value={method}>
+                            {method}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </td>
+                  <td className="px-3 py-2">
+                    <input
+                      type="number"
+                      step="any"
+                      {...form.register(`specs.${index}.stiffness_md_value`, {
+                        setValueAs: parseNumber,
+                      })}
+                      className="w-20 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
+                      placeholder="-"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <input
+                      type="number"
+                      step="any"
+                      {...form.register(`specs.${index}.stiffness_cd_value`, {
+                        setValueAs: parseNumber,
+                      })}
+                      className="w-20 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
+                      placeholder="-"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      max="100"
+                      {...form.register(`specs.${index}.opacity`, {
+                        setValueAs: parseNumber,
+                      })}
+                      className="w-16 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
+                      placeholder="-"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      max="100"
+                      {...form.register(`specs.${index}.moisture`, {
                         setValueAs: parseNumber,
                       })}
                       className="w-16 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
@@ -366,6 +569,56 @@ export function TDSPreviewTable({
           </table>
         </div>
       </div>
+
+      {showExtraSpecs && (
+        <div className="border rounded-lg overflow-hidden">
+          <div className="bg-gray-50 px-4 py-3 border-b flex items-center justify-between">
+            <h3 className="font-medium text-gray-900">Extra Specifications</h3>
+            <button
+              type="button"
+              onClick={addExtraSpec}
+              className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+            >
+              <Plus className="w-4 h-4" /> Add Field
+            </button>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {extraSpecFields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className="flex items-center gap-2 p-2 bg-gray-50 rounded"
+                >
+                  <input
+                    {...form.register(`extra_specs.${index}.key`)}
+                    placeholder="Key"
+                    className="flex-1 px-2 py-1 border rounded text-sm focus:ring-1 focus:ring-blue-500"
+                  />
+                  <span className="text-gray-400">:</span>
+                  <input
+                    {...form.register(`extra_specs.${index}.value`)}
+                    placeholder="Value"
+                    className="flex-1 px-2 py-1 border rounded text-sm focus:ring-1 focus:ring-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeExtraSpec(index)}
+                    className="p-1 text-red-500 hover:bg-red-50 rounded"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+              {extraSpecFields.length === 0 && (
+                <p className="text-sm text-gray-500 col-span-full text-center py-4">
+                  No extra specifications. Click &quot;Add Field&quot; to add
+                  custom key-value pairs.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {parsedData.notes && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">

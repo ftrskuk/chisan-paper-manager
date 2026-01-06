@@ -6,7 +6,16 @@ import type {
   SmoothnessMethod,
   SmoothnessUnit,
   StiffnessUnit,
+  ThicknessUnit,
+  TensileUnit,
+  TearUnit,
 } from '@/types/database'
+import {
+  convertThickness,
+  convertTensile,
+  convertTear,
+  convertStiffness,
+} from '@/utils/unit-converters'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -136,9 +145,22 @@ function validateAndNormalize(raw: unknown): TDSParseResult {
       if (spec.caliper && typeof spec.caliper === 'object') {
         const cal = spec.caliper as { value: number; unit: string }
         if (cal.value > 0) {
-          normalizedSpec.caliper = {
-            value: cal.value,
-            unit: cal.unit as 'µm' | 'mm' | 'mil' | 'inch',
+          try {
+            const normalizedValue = convertThickness(
+              cal.value,
+              cal.unit as ThicknessUnit
+            )
+            normalizedSpec.caliper = {
+              value: Number(normalizedValue.toFixed(2)),
+              unit: 'µm',
+            }
+          } catch (e) {
+            console.warn(`Failed to convert thickness: ${e}`)
+            // Fallback to original if conversion fails, though we prefer strictness
+            normalizedSpec.caliper = {
+              value: cal.value,
+              unit: cal.unit as ThicknessUnit,
+            }
           }
         }
       }
@@ -146,9 +168,21 @@ function validateAndNormalize(raw: unknown): TDSParseResult {
       if (spec.tensile_md && typeof spec.tensile_md === 'object') {
         const t = spec.tensile_md as { value: number; unit: string }
         if (t.value > 0) {
-          normalizedSpec.tensile_md = {
-            value: t.value,
-            unit: t.unit as 'kN/m' | 'kgf/15mm' | 'N/15mm' | 'lb/in',
+          try {
+            const normalizedValue = convertTensile(
+              t.value,
+              t.unit as TensileUnit
+            )
+            normalizedSpec.tensile_md = {
+              value: Number(normalizedValue.toFixed(2)),
+              unit: 'kN/m',
+            }
+          } catch (e) {
+            console.warn(`Failed to convert tensile_md: ${e}`)
+            normalizedSpec.tensile_md = {
+              value: t.value,
+              unit: t.unit as TensileUnit,
+            }
           }
         }
       }
@@ -156,9 +190,21 @@ function validateAndNormalize(raw: unknown): TDSParseResult {
       if (spec.tensile_cd && typeof spec.tensile_cd === 'object') {
         const t = spec.tensile_cd as { value: number; unit: string }
         if (t.value > 0) {
-          normalizedSpec.tensile_cd = {
-            value: t.value,
-            unit: t.unit as 'kN/m' | 'kgf/15mm' | 'N/15mm' | 'lb/in',
+          try {
+            const normalizedValue = convertTensile(
+              t.value,
+              t.unit as TensileUnit
+            )
+            normalizedSpec.tensile_cd = {
+              value: Number(normalizedValue.toFixed(2)),
+              unit: 'kN/m',
+            }
+          } catch (e) {
+            console.warn(`Failed to convert tensile_cd: ${e}`)
+            normalizedSpec.tensile_cd = {
+              value: t.value,
+              unit: t.unit as TensileUnit,
+            }
           }
         }
       }
@@ -166,9 +212,18 @@ function validateAndNormalize(raw: unknown): TDSParseResult {
       if (spec.tear_md && typeof spec.tear_md === 'object') {
         const t = spec.tear_md as { value: number; unit: string }
         if (t.value > 0) {
-          normalizedSpec.tear_md = {
-            value: t.value,
-            unit: t.unit as 'mN' | 'gf' | 'cN',
+          try {
+            const normalizedValue = convertTear(t.value, t.unit as TearUnit)
+            normalizedSpec.tear_md = {
+              value: Number(normalizedValue.toFixed(2)),
+              unit: 'mN',
+            }
+          } catch (e) {
+            console.warn(`Failed to convert tear_md: ${e}`)
+            normalizedSpec.tear_md = {
+              value: t.value,
+              unit: t.unit as TearUnit,
+            }
           }
         }
       }
@@ -176,9 +231,18 @@ function validateAndNormalize(raw: unknown): TDSParseResult {
       if (spec.tear_cd && typeof spec.tear_cd === 'object') {
         const t = spec.tear_cd as { value: number; unit: string }
         if (t.value > 0) {
-          normalizedSpec.tear_cd = {
-            value: t.value,
-            unit: t.unit as 'mN' | 'gf' | 'cN',
+          try {
+            const normalizedValue = convertTear(t.value, t.unit as TearUnit)
+            normalizedSpec.tear_cd = {
+              value: Number(normalizedValue.toFixed(2)),
+              unit: 'mN',
+            }
+          } catch (e) {
+            console.warn(`Failed to convert tear_cd: ${e}`)
+            normalizedSpec.tear_cd = {
+              value: t.value,
+              unit: t.unit as TearUnit,
+            }
           }
         }
       }
@@ -190,6 +254,8 @@ function validateAndNormalize(raw: unknown): TDSParseResult {
           method: string
         }
         if (s.value > 0) {
+          // Smoothness has different methods (Bekk, PPS) that are not directly convertible linearly
+          // We keep them as is, but ensure types are correct
           normalizedSpec.smoothness = {
             value: s.value,
             unit: s.unit as SmoothnessUnit,
@@ -201,9 +267,21 @@ function validateAndNormalize(raw: unknown): TDSParseResult {
       if (spec.stiffness_md && typeof spec.stiffness_md === 'object') {
         const s = spec.stiffness_md as { value: number; unit: string }
         if (s.value > 0) {
-          normalizedSpec.stiffness_md = {
-            value: s.value,
-            unit: s.unit as StiffnessUnit,
+          try {
+            const normalizedValue = convertStiffness(
+              s.value,
+              s.unit as StiffnessUnit
+            )
+            normalizedSpec.stiffness_md = {
+              value: Number(normalizedValue.toFixed(2)),
+              unit: 'mN·m',
+            }
+          } catch (e) {
+            console.warn(`Failed to convert stiffness_md: ${e}`)
+            normalizedSpec.stiffness_md = {
+              value: s.value,
+              unit: s.unit as StiffnessUnit,
+            }
           }
         }
       }
@@ -211,9 +289,21 @@ function validateAndNormalize(raw: unknown): TDSParseResult {
       if (spec.stiffness_cd && typeof spec.stiffness_cd === 'object') {
         const s = spec.stiffness_cd as { value: number; unit: string }
         if (s.value > 0) {
-          normalizedSpec.stiffness_cd = {
-            value: s.value,
-            unit: s.unit as StiffnessUnit,
+          try {
+            const normalizedValue = convertStiffness(
+              s.value,
+              s.unit as StiffnessUnit
+            )
+            normalizedSpec.stiffness_cd = {
+              value: Number(normalizedValue.toFixed(2)),
+              unit: 'mN·m',
+            }
+          } catch (e) {
+            console.warn(`Failed to convert stiffness_cd: ${e}`)
+            normalizedSpec.stiffness_cd = {
+              value: s.value,
+              unit: s.unit as StiffnessUnit,
+            }
           }
         }
       }
