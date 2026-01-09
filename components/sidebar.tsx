@@ -7,6 +7,7 @@ import type { Profile } from '@/types/database'
 
 interface SidebarProps {
   profile: Profile
+  mobile?: boolean
 }
 
 const navItems = [
@@ -16,20 +17,25 @@ const navItems = [
   { href: '/categories', label: 'Categories', adminOnly: true },
 ]
 
-export function Sidebar({ profile }: SidebarProps) {
+export function Sidebar({ profile, mobile = false }: SidebarProps) {
   const pathname = usePathname()
   const isAdmin = profile.role === 'admin'
 
   const filteredItems = navItems.filter((item) => !item.adminOnly || isAdmin)
 
   return (
-    <aside className="w-64 border-r bg-gray-50 min-h-screen p-4 relative">
+    <aside 
+      className={cn(
+        "bg-gray-50 p-4 relative h-full flex flex-col",
+        mobile ? "w-full min-h-full border-none" : "w-64 min-h-screen border-r"
+      )}
+    >
       <div className="mb-8">
         <h1 className="text-xl font-bold text-gray-900">Chisan Paper</h1>
         <p className="text-sm text-gray-500">Technical Data Manager</p>
       </div>
 
-      <nav className="space-y-1">
+      <nav className="space-y-1 flex-1">
         {filteredItems.map((item) => (
           <Link
             key={item.href}
@@ -46,19 +52,20 @@ export function Sidebar({ profile }: SidebarProps) {
         ))}
       </nav>
 
-      <div className="absolute bottom-4 left-4 right-4">
-        <div className="border-t pt-4">
-          <p className="text-sm text-gray-600 truncate">{profile.email}</p>
-          <p className="text-xs text-gray-400 capitalize">{profile.role}</p>
-          <form action="/auth/signout" method="post">
-            <button
-              type="submit"
-              className="mt-2 text-sm text-red-600 hover:text-red-800"
-            >
-              Sign out
-            </button>
-          </form>
-        </div>
+      <div className={cn(
+        "mt-auto pt-4 border-t",
+        mobile ? "pb-8" : "absolute bottom-4 left-4 right-4"
+      )}>
+        <p className="text-sm text-gray-600 truncate">{profile.email}</p>
+        <p className="text-xs text-gray-400 capitalize">{profile.role}</p>
+        <form action="/auth/signout" method="post">
+          <button
+            type="submit"
+            className="mt-2 text-sm text-red-600 hover:text-red-800"
+          >
+            Sign out
+          </button>
+        </form>
       </div>
     </aside>
   )

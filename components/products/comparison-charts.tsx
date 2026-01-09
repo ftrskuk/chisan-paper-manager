@@ -1,6 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts'
 
 interface SpecWithProduct {
   id: string
@@ -32,360 +41,190 @@ interface ComparisonChartsProps {
   specs: SpecWithProduct[]
 }
 
-const PRODUCT_COLORS = [
-  {
-    bg: 'bg-blue-500',
-    text: 'text-blue-600',
-    light: 'bg-blue-50',
-    border: 'border-blue-200',
-  },
-  {
-    bg: 'bg-green-500',
-    text: 'text-green-600',
-    light: 'bg-green-50',
-    border: 'border-green-200',
-  },
-  {
-    bg: 'bg-orange-500',
-    text: 'text-orange-600',
-    light: 'bg-orange-50',
-    border: 'border-orange-200',
-  },
-  {
-    bg: 'bg-purple-500',
-    text: 'text-purple-600',
-    light: 'bg-purple-50',
-    border: 'border-purple-200',
-  },
-  {
-    bg: 'bg-pink-500',
-    text: 'text-pink-600',
-    light: 'bg-pink-50',
-    border: 'border-pink-200',
-  },
-  {
-    bg: 'bg-indigo-500',
-    text: 'text-indigo-600',
-    light: 'bg-indigo-50',
-    border: 'border-indigo-200',
-  },
-  {
-    bg: 'bg-teal-500',
-    text: 'text-teal-600',
-    light: 'bg-teal-50',
-    border: 'border-teal-200',
-  },
-  {
-    bg: 'bg-rose-500',
-    text: 'text-rose-600',
-    light: 'bg-rose-50',
-    border: 'border-rose-200',
-  },
-  {
-    bg: 'bg-amber-500',
-    text: 'text-amber-600',
-    light: 'bg-amber-50',
-    border: 'border-amber-200',
-  },
-  {
-    bg: 'bg-cyan-500',
-    text: 'text-cyan-600',
-    light: 'bg-cyan-50',
-    border: 'border-cyan-200',
-  },
+const CHART_COLORS = [
+  '#3b82f6',
+  '#22c55e',
+  '#f97316',
+  '#a855f7',
+  '#ec4899',
+  '#6366f1',
+  '#14b8a6',
+  '#f43f5e',
+  '#f59e0b',
+  '#06b6d4',
 ]
 
-interface PropertyRowProps {
+interface SpecProperty {
+  key: keyof SpecWithProduct
   label: string
   unit: string
-  value: number | null
-  maxValue: number
-  color: string
-  isPercentage?: boolean
+  category: 'physical' | 'surface' | 'strength'
 }
 
-function PropertyRow({
-  label,
-  unit,
-  value,
-  maxValue,
-  color,
-  isPercentage = false,
-}: PropertyRowProps) {
-  const displayValue = value ?? 0
-  const percentage = maxValue > 0 ? (displayValue / maxValue) * 100 : 0
-  const formattedValue = isPercentage
-    ? displayValue.toFixed(1)
-    : displayValue.toFixed(2)
+const SPEC_PROPERTIES: SpecProperty[] = [
+  { key: 'gsm', label: 'GSM', unit: 'g/m²', category: 'physical' },
+  { key: 'caliper', label: 'Caliper', unit: 'µm', category: 'physical' },
+  { key: 'density', label: 'Density', unit: 'g/cm³', category: 'physical' },
+  { key: 'brightness', label: 'Brightness', unit: '%', category: 'surface' },
+  { key: 'opacity', label: 'Opacity', unit: '%', category: 'surface' },
+  { key: 'smoothness', label: 'Smoothness', unit: 'sec', category: 'surface' },
+  { key: 'cobb_60', label: 'Cobb 60', unit: 'g/m²', category: 'surface' },
+  { key: 'moisture', label: 'Moisture', unit: '%', category: 'surface' },
+  { key: 'tensile_md', label: 'Tensile MD', unit: 'kN/m', category: 'strength' },
+  { key: 'tensile_cd', label: 'Tensile CD', unit: 'kN/m', category: 'strength' },
+  { key: 'tear_md', label: 'Tear MD', unit: 'mN', category: 'strength' },
+  { key: 'tear_cd', label: 'Tear CD', unit: 'mN', category: 'strength' },
+  { key: 'stiffness_md', label: 'Stiffness MD', unit: 'mN·m', category: 'strength' },
+  { key: 'stiffness_cd', label: 'Stiffness CD', unit: 'mN·m', category: 'strength' },
+]
+
+interface PropertyChartProps {
+  specs: SpecWithProduct[]
+  property: SpecProperty
+}
+
+function PropertyChart({ specs, property }: PropertyChartProps) {
+  const data = specs
+    .map((spec, index) => {
+      const value = spec[property.key]
+      const productLabel = spec.products
+        ? `${spec.products.mill_name} - ${spec.products.name} (${spec.gsm}gsm)`
+        : `Unknown (${spec.gsm}gsm)`
+
+      return {
+        name: productLabel,
+        value: typeof value === 'number' ? value : null,
+        color: CHART_COLORS[index % CHART_COLORS.length],
+      }
+    })
+    .filter((d) => d.value !== null)
+
+  if (data.length === 0) {
+    return null
+  }
+
+  const chartHeight = Math.max(200, data.length * 50 + 60)
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex justify-between items-center">
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          {label} <span className="text-xs text-slate-400">({unit})</span>
-        </span>
-        <span className="text-sm font-semibold text-slate-900 dark:text-white">
-          {value === null ? 'N/A' : formattedValue}
-        </span>
+    <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 shadow-sm overflow-hidden">
+      <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+          {property.label}
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Unit: {property.unit}
+        </p>
       </div>
-      <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-        <div
-          className={`h-full rounded-full ${color} transition-all duration-300`}
-          style={{ width: `${percentage}%` }}
-        />
+      <div className="p-4">
+        <ResponsiveContainer width="100%" height={chartHeight}>
+          <BarChart
+            data={data}
+            layout="vertical"
+            margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+            <XAxis
+              type="number"
+              tick={{ fontSize: 12 }}
+              tickFormatter={(value) => value.toLocaleString()}
+            />
+            <YAxis
+              type="category"
+              dataKey="name"
+              width={200}
+              tick={{ fontSize: 11 }}
+              tickFormatter={(value: string) =>
+                value.length > 30 ? value.slice(0, 30) + '...' : value
+              }
+            />
+            <Tooltip
+              formatter={(value: number) => [
+                `${value.toLocaleString()} ${property.unit}`,
+                property.label,
+              ]}
+              contentStyle={{
+                backgroundColor: 'white',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              }}
+            />
+            <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   )
 }
 
 export function ComparisonCharts({ specs }: ComparisonChartsProps) {
-  const [overlayMode, setOverlayMode] = useState(false)
-  const [selectedProperties, setSelectedProperties] = useState<
-    Record<string, boolean>
-  >({})
+  const physicalProps = SPEC_PROPERTIES.filter((p) => p.category === 'physical')
+  const surfaceProps = SPEC_PROPERTIES.filter((p) => p.category === 'surface')
+  const strengthProps = SPEC_PROPERTIES.filter((p) => p.category === 'strength')
 
-  const maxGsm = Math.max(...specs.map((s) => s.gsm), 1)
-  const maxCaliper = Math.max(...specs.map((s) => s.caliper), 1)
-  const maxTensileMd = Math.max(...specs.map((s) => s.tensile_md ?? 0), 1)
-  const maxTensileCd = Math.max(...specs.map((s) => s.tensile_cd ?? 0), 1)
-  const maxTearMd = Math.max(...specs.map((s) => s.tear_md ?? 0), 1)
-  const maxTearCd = Math.max(...specs.map((s) => s.tear_cd ?? 0), 1)
-  const maxStiffnessMd = Math.max(...specs.map((s) => s.stiffness_md ?? 0), 1)
-  const maxStiffnessCd = Math.max(...specs.map((s) => s.stiffness_cd ?? 0), 1)
-  const maxBrightness = Math.max(...specs.map((s) => s.brightness ?? 0), 1)
-  const maxOpacity = Math.max(...specs.map((s) => s.opacity ?? 0), 1)
-  const maxSmoothness = Math.max(...specs.map((s) => s.smoothness ?? 0), 1)
-  const maxCobb = Math.max(...specs.map((s) => s.cobb_60 ?? 0), 1)
-  const maxMoisture = Math.max(...specs.map((s) => s.moisture ?? 0), 1)
-  const maxDensity = Math.max(...specs.map((s) => s.density ?? 0), 1)
-
-  const toggleProperty = (key: string) => {
-    if (overlayMode) {
-      setSelectedProperties((prev) => ({ ...prev, [key]: !prev[key] }))
-    }
-  }
+  const hasData = (property: SpecProperty) =>
+    specs.some((spec) => spec[property.key] !== null)
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 shadow-sm gap-4">
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400">
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-bold text-slate-900 dark:text-white">
-              Overlay Charts
-            </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              Click bars to overlay selected properties
-            </span>
-          </div>
-        </div>
-        <button
-          onClick={() => {
-            setOverlayMode(!overlayMode)
-            if (overlayMode) setSelectedProperties({})
-          }}
-          className={`relative flex h-[28px] w-[48px] cursor-pointer items-center rounded-full border-none p-0.5 transition-colors duration-200 ${
-            overlayMode
-              ? 'bg-primary justify-end'
-              : 'bg-slate-200 dark:bg-slate-700 justify-start'
-          }`}
-        >
-          <div className="h-[24px] w-[24px] rounded-full bg-white shadow-sm transition-all" />
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="flex flex-wrap gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 shadow-sm">
         {specs.map((spec, index) => {
-          const color = PRODUCT_COLORS[index % PRODUCT_COLORS.length]
-          const isSelected = (key: string) =>
-            selectedProperties[key] && overlayMode
+          const productLabel = spec.products
+            ? `${spec.products.mill_name} - ${spec.products.name}`
+            : 'Unknown Product'
 
           return (
-            <div
-              key={spec.id}
-              className={`flex flex-col rounded-xl border bg-white dark:bg-slate-850 shadow-sm overflow-hidden ${
-                overlayMode
-                  ? 'border-slate-200 dark:border-slate-700'
-                  : color.border
-              }`}
-            >
+            <div key={spec.id} className="flex items-center gap-2">
               <div
-                className={`p-4 border-b ${overlayMode ? 'border-slate-200 dark:border-slate-700' : color.border} flex flex-col gap-2 relative`}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <div
-                    className={`size-6 rounded-full ${color.bg} flex items-center justify-center text-white text-xs font-bold`}
-                  >
-                    {String.fromCharCode(65 + index)}
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
-                    {spec.products?.name || 'Unknown Product'}
-                  </h3>
-                </div>
-                <p className={`text-sm ${color.text} font-medium`}>
-                  {spec.products?.mill_name || 'Unknown Mill'}
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  {spec.products?.categories?.name || 'Specialty'} • {spec.gsm}{' '}
-                  gsm
-                </p>
-                {!overlayMode && (
-                  <div
-                    className={`absolute top-4 right-4 ${color.light} ${color.text} text-xs px-2 py-1 rounded font-semibold`}
-                  >
-                    Option {String.fromCharCode(65 + index)}
-                  </div>
-                )}
-              </div>
-
-              <div className="p-4 flex flex-col gap-4">
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Physical Properties
-                  </span>
-                  <div className="flex flex-col gap-3 mt-3">
-                    <PropertyRow
-                      label="GSM"
-                      unit="g/m²"
-                      value={spec.gsm}
-                      maxValue={maxGsm}
-                      color={isSelected('gsm') ? 'bg-primary' : color.bg}
-                    />
-                    <PropertyRow
-                      label="Caliper"
-                      unit="µm"
-                      value={spec.caliper}
-                      maxValue={maxCaliper}
-                      color={isSelected('caliper') ? 'bg-primary' : color.bg}
-                    />
-                    <PropertyRow
-                      label="Density"
-                      unit="g/cm³"
-                      value={spec.density}
-                      maxValue={maxDensity}
-                      color={isSelected('density') ? 'bg-primary' : color.bg}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Surface Properties
-                  </span>
-                  <div className="flex flex-col gap-3 mt-3">
-                    <PropertyRow
-                      label="Brightness"
-                      unit="%"
-                      value={spec.brightness}
-                      maxValue={maxBrightness}
-                      isPercentage
-                      color={isSelected('brightness') ? 'bg-primary' : color.bg}
-                    />
-                    <PropertyRow
-                      label="Opacity"
-                      unit="%"
-                      value={spec.opacity}
-                      maxValue={maxOpacity}
-                      isPercentage
-                      color={isSelected('opacity') ? 'bg-primary' : color.bg}
-                    />
-                    <PropertyRow
-                      label="Smoothness"
-                      unit={`${spec.smoothness_unit || 'sec'}`}
-                      value={spec.smoothness}
-                      maxValue={maxSmoothness}
-                      color={isSelected('smoothness') ? 'bg-primary' : color.bg}
-                    />
-                    <PropertyRow
-                      label="Cobb 60"
-                      unit="g/m²"
-                      value={spec.cobb_60}
-                      maxValue={maxCobb}
-                      color={isSelected('cobb') ? 'bg-primary' : color.bg}
-                    />
-                    <PropertyRow
-                      label="Moisture"
-                      unit="%"
-                      value={spec.moisture}
-                      maxValue={maxMoisture}
-                      isPercentage
-                      color={isSelected('moisture') ? 'bg-primary' : color.bg}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Strength Properties
-                  </span>
-                  <div className="flex flex-col gap-3 mt-3">
-                    <PropertyRow
-                      label="Tensile MD"
-                      unit="kN/m"
-                      value={spec.tensile_md}
-                      maxValue={maxTensileMd}
-                      color={isSelected('tensile_md') ? 'bg-primary' : color.bg}
-                    />
-                    <PropertyRow
-                      label="Tensile CD"
-                      unit="kN/m"
-                      value={spec.tensile_cd}
-                      maxValue={maxTensileCd}
-                      color={isSelected('tensile_cd') ? 'bg-primary' : color.bg}
-                    />
-                    <PropertyRow
-                      label="Tear MD"
-                      unit="mN"
-                      value={spec.tear_md}
-                      maxValue={maxTearMd}
-                      color={isSelected('tear_md') ? 'bg-primary' : color.bg}
-                    />
-                    <PropertyRow
-                      label="Tear CD"
-                      unit="mN"
-                      value={spec.tear_cd}
-                      maxValue={maxTearCd}
-                      color={isSelected('tear_cd') ? 'bg-primary' : color.bg}
-                    />
-                    <PropertyRow
-                      label="Stiffness MD"
-                      unit="mN·m"
-                      value={spec.stiffness_md}
-                      maxValue={maxStiffnessMd}
-                      color={
-                        isSelected('stiffness_md') ? 'bg-primary' : color.bg
-                      }
-                    />
-                    <PropertyRow
-                      label="Stiffness CD"
-                      unit="mN·m"
-                      value={spec.stiffness_cd}
-                      maxValue={maxStiffnessCd}
-                      color={
-                        isSelected('stiffness_cd') ? 'bg-primary' : color.bg
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
+                className="w-4 h-4 rounded"
+                style={{
+                  backgroundColor: CHART_COLORS[index % CHART_COLORS.length],
+                }}
+              />
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                {productLabel} ({spec.gsm}gsm)
+              </span>
             </div>
           )
         })}
       </div>
+
+      <section>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+          Physical Properties
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {physicalProps.filter(hasData).map((prop) => (
+            <PropertyChart key={prop.key} specs={specs} property={prop} />
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+          Surface Properties
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {surfaceProps.filter(hasData).map((prop) => (
+            <PropertyChart key={prop.key} specs={specs} property={prop} />
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+          Strength Properties
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {strengthProps.filter(hasData).map((prop) => (
+            <PropertyChart key={prop.key} specs={specs} property={prop} />
+          ))}
+        </div>
+      </section>
     </div>
   )
 }
