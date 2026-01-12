@@ -167,7 +167,7 @@ export const SpecVariantForm = memo(function SpecVariantForm({
             htmlFor={`specs.${index}.smoothness`}
             className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5"
           >
-            Smoothness (sec)
+            Smoothness (Bekk, sec)
           </label>
           <input
             id={`specs.${index}.smoothness`}
@@ -176,6 +176,23 @@ export const SpecVariantForm = memo(function SpecVariantForm({
             {...register(`specs.${index}.smoothness`, { valueAsNumber: true })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             placeholder="30"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor={`specs.${index}.roughness`}
+            className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5"
+          >
+            Roughness (Bendtsen, ml/min)
+          </label>
+          <input
+            id={`specs.${index}.roughness`}
+            type="number"
+            step="1"
+            {...register(`specs.${index}.roughness`, { valueAsNumber: true })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            placeholder="150"
           />
         </div>
 
@@ -231,6 +248,23 @@ export const SpecVariantForm = memo(function SpecVariantForm({
             {...register(`specs.${index}.brightness`, { valueAsNumber: true })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             placeholder="80"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor={`specs.${index}.whiteness`}
+            className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5"
+          >
+            Whiteness (CIE)
+          </label>
+          <input
+            id={`specs.${index}.whiteness`}
+            type="number"
+            step="0.1"
+            {...register(`specs.${index}.whiteness`, { valueAsNumber: true })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            placeholder="70"
           />
         </div>
 

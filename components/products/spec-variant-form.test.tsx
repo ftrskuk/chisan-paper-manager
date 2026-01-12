@@ -49,9 +49,11 @@ describe('SpecVariantForm', () => {
       expect(screen.getByLabelText(/Tear MD/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/Tear CD/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/Smoothness/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/Roughness/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/Stiffness MD/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/Stiffness CD/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/Brightness/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/Whiteness/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/Cobb 60/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/Density/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/Opacity/i)).toBeInTheDocument()
@@ -98,6 +100,9 @@ describe('SpecVariantForm', () => {
       expect(mockRegister).toHaveBeenCalledWith('specs.1.smoothness', {
         valueAsNumber: true,
       })
+      expect(mockRegister).toHaveBeenCalledWith('specs.1.roughness', {
+        valueAsNumber: true,
+      })
       expect(mockRegister).toHaveBeenCalledWith('specs.1.stiffness_md', {
         valueAsNumber: true,
       })
@@ -105,6 +110,9 @@ describe('SpecVariantForm', () => {
         valueAsNumber: true,
       })
       expect(mockRegister).toHaveBeenCalledWith('specs.1.brightness', {
+        valueAsNumber: true,
+      })
+      expect(mockRegister).toHaveBeenCalledWith('specs.1.whiteness', {
         valueAsNumber: true,
       })
       expect(mockRegister).toHaveBeenCalledWith('specs.1.cobb_60', {

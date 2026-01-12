@@ -6,9 +6,11 @@ export interface SpecInput {
   tear_md?: number
   tear_cd?: number
   smoothness?: number
+  roughness?: number
   stiffness_md?: number
   stiffness_cd?: number
   brightness?: number
+  whiteness?: number
   cobb_60?: number
   density?: number
   opacity?: number
@@ -25,9 +27,11 @@ export interface SpecForInsert {
   tear_md: number | null
   tear_cd: number | null
   smoothness: number | null
+  roughness: number | null
   stiffness_md: number | null
   stiffness_cd: number | null
   brightness: number | null
+  whiteness: number | null
   cobb_60: number | null
   density: number | null
   opacity: number | null
@@ -48,9 +52,11 @@ export function buildSpecsForInsert(
     tear_md: spec.tear_md ?? null,
     tear_cd: spec.tear_cd ?? null,
     smoothness: spec.smoothness ?? null,
+    roughness: spec.roughness ?? null,
     stiffness_md: spec.stiffness_md ?? null,
     stiffness_cd: spec.stiffness_cd ?? null,
     brightness: spec.brightness ?? null,
+    whiteness: spec.whiteness ?? null,
     cobb_60: spec.cobb_60 ?? null,
     density: spec.density ?? null,
     opacity: spec.opacity ?? null,

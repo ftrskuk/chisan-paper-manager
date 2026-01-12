@@ -46,9 +46,11 @@ export interface ProductSpec {
   tear_cd: number | null
   smoothness: number | null
   smoothness_unit: SmoothnessUnit | null
+  roughness: number | null
   stiffness_md: number | null
   stiffness_cd: number | null
   brightness: number | null
+  whiteness: number | null
   cobb_60: number | null
   density: number | null
   opacity: number | null
@@ -141,9 +143,11 @@ export interface ProductSpecFormInput {
   tear_md?: number
   tear_cd?: number
   smoothness?: number
+  roughness?: number
   stiffness_md?: number
   stiffness_cd?: number
   brightness?: number
+  whiteness?: number
   cobb_60?: number
   density?: number
   opacity?: number
