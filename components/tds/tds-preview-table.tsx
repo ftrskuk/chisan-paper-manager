@@ -25,14 +25,13 @@ interface FlatSpec {
   tensile_cd_value: number | null
   tear_md_value: number | null
   tear_cd_value: number | null
-  brightness: number | null
-  cobb_60: number | null
-  smoothness_value: number | null
-  smoothness_unit: string
-  smoothness_method: string
+  smoothness: number | null
+  roughness: number | null
   stiffness_md_value: number | null
   stiffness_cd_value: number | null
+  brightness: number | null
   whiteness: number | null
+  cobb_60: number | null
   density: number | null
   opacity: number | null
   moisture: number | null
@@ -51,10 +50,6 @@ interface FormValues {
   specs: FlatSpec[]
   extra_specs: ExtraSpecItem[]
 }
-
-const SMOOTHNESS_UNITS = ['sec', 'ml/min', 'µm']
-const SMOOTHNESS_METHODS = ['Bekk', 'Bendtsen', 'PPS']
-const STIFFNESS_UNIT = 'mN·m'
 
 export function TDSPreviewTable({
   parsedData,
@@ -82,15 +77,14 @@ export function TDSPreviewTable({
         tensile_cd_value: spec.tensile_cd?.value ?? null,
         tear_md_value: spec.tear_md?.value ?? null,
         tear_cd_value: spec.tear_cd?.value ?? null,
-        brightness: spec.brightness ?? null,
-        cobb_60: spec.cobb_60 ?? null,
-        smoothness_value: spec.smoothness?.value ?? null,
-        smoothness_unit: spec.smoothness?.unit ?? 'sec',
-        smoothness_method: spec.smoothness?.method ?? 'Bekk',
+        smoothness: spec.smoothness ?? null,
+        roughness: spec.roughness ?? null,
         stiffness_md_value: spec.stiffness_md?.value ?? null,
         stiffness_cd_value: spec.stiffness_cd?.value ?? null,
-        whiteness: null,
-        density: null,
+        brightness: spec.brightness ?? null,
+        whiteness: spec.whiteness ?? null,
+        cobb_60: spec.cobb_60 ?? null,
+        density: spec.density ?? null,
         opacity: spec.opacity ?? null,
         moisture: spec.moisture ?? null,
       })),
@@ -157,12 +151,12 @@ export function TDSPreviewTable({
             ? { value: spec.tear_cd_value, unit: 'mN' as const }
             : null,
         smoothness:
-          spec.smoothness_value != null && !isNaN(spec.smoothness_value)
-            ? {
-                value: spec.smoothness_value,
-                unit: spec.smoothness_unit as 'sec' | 'ml/min' | 'µm',
-                method: spec.smoothness_method as 'Bekk' | 'Bendtsen' | 'PPS',
-              }
+          spec.smoothness != null && !isNaN(spec.smoothness)
+            ? spec.smoothness
+            : null,
+        roughness:
+          spec.roughness != null && !isNaN(spec.roughness)
+            ? spec.roughness
             : null,
         stiffness_md:
           spec.stiffness_md_value != null && !isNaN(spec.stiffness_md_value)
@@ -175,6 +169,10 @@ export function TDSPreviewTable({
         brightness:
           spec.brightness != null && !isNaN(spec.brightness)
             ? spec.brightness
+            : null,
+        whiteness:
+          spec.whiteness != null && !isNaN(spec.whiteness)
+            ? spec.whiteness
             : null,
         cobb_60:
           spec.cobb_60 != null && !isNaN(spec.cobb_60) ? spec.cobb_60 : null,
@@ -227,14 +225,13 @@ export function TDSPreviewTable({
       tensile_cd_value: null,
       tear_md_value: null,
       tear_cd_value: null,
-      brightness: null,
-      cobb_60: null,
-      smoothness_value: null,
-      smoothness_unit: 'sec',
-      smoothness_method: 'Bekk',
+      smoothness: null,
+      roughness: null,
       stiffness_md_value: null,
       stiffness_cd_value: null,
+      brightness: null,
       whiteness: null,
+      cobb_60: null,
       density: null,
       opacity: null,
       moisture: null,
@@ -344,19 +341,25 @@ export function TDSPreviewTable({
                   Tear CD
                 </th>
                 <th className="px-3 py-2 text-left font-medium text-gray-600 w-20">
-                  Brightness
+                  Smoothness
                 </th>
                 <th className="px-3 py-2 text-left font-medium text-gray-600 w-20">
-                  Cobb 60
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 w-36">
-                  Smoothness
+                  Roughness
                 </th>
                 <th className="px-3 py-2 text-left font-medium text-gray-600 w-28">
                   Stiffness MD
                 </th>
                 <th className="px-3 py-2 text-left font-medium text-gray-600 w-28">
                   Stiffness CD
+                </th>
+                <th className="px-3 py-2 text-left font-medium text-gray-600 w-20">
+                  Brightness
+                </th>
+                <th className="px-3 py-2 text-left font-medium text-gray-600 w-20">
+                  Whiteness
+                </th>
+                <th className="px-3 py-2 text-left font-medium text-gray-600 w-20">
+                  Cobb 60
                 </th>
                 <th className="px-3 py-2 text-left font-medium text-gray-600 w-20">
                   Opacity
@@ -450,9 +453,7 @@ export function TDSPreviewTable({
                     <input
                       type="number"
                       step="any"
-                      min="0"
-                      max="100"
-                      {...form.register(`specs.${index}.brightness`, {
+                      {...form.register(`specs.${index}.smoothness`, {
                         setValueAs: parseNumber,
                       })}
                       className="w-16 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
@@ -463,47 +464,12 @@ export function TDSPreviewTable({
                     <input
                       type="number"
                       step="any"
-                      {...form.register(`specs.${index}.cobb_60`, {
+                      {...form.register(`specs.${index}.roughness`, {
                         setValueAs: parseNumber,
                       })}
                       className="w-16 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
                       placeholder="-"
                     />
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="number"
-                          step="any"
-                          {...form.register(`specs.${index}.smoothness_value`, {
-                            setValueAs: parseNumber,
-                          })}
-                          className="w-14 px-1 py-1 border rounded focus:ring-1 focus:ring-blue-500"
-                          placeholder="-"
-                        />
-                        <select
-                          {...form.register(`specs.${index}.smoothness_unit`)}
-                          className="px-1 py-1 border rounded text-xs w-14"
-                        >
-                          {SMOOTHNESS_UNITS.map((unit) => (
-                            <option key={unit} value={unit}>
-                              {unit}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <select
-                        {...form.register(`specs.${index}.smoothness_method`)}
-                        className="px-1 py-1 border rounded text-xs w-full"
-                      >
-                        {SMOOTHNESS_METHODS.map((method) => (
-                          <option key={method} value={method}>
-                            {method}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
                   </td>
                   <td className="px-3 py-2">
                     <input
@@ -524,6 +490,41 @@ export function TDSPreviewTable({
                         setValueAs: parseNumber,
                       })}
                       className="w-20 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
+                      placeholder="-"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      max="100"
+                      {...form.register(`specs.${index}.brightness`, {
+                        setValueAs: parseNumber,
+                      })}
+                      className="w-16 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
+                      placeholder="-"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <input
+                      type="number"
+                      step="any"
+                      {...form.register(`specs.${index}.whiteness`, {
+                        setValueAs: parseNumber,
+                      })}
+                      className="w-16 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
+                      placeholder="-"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <input
+                      type="number"
+                      step="any"
+                      {...form.register(`specs.${index}.cobb_60`, {
+                        setValueAs: parseNumber,
+                      })}
+                      className="w-16 px-2 py-1 border rounded focus:ring-1 focus:ring-blue-500"
                       placeholder="-"
                     />
                   </td>

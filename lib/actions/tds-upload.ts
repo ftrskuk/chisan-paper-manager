@@ -20,7 +20,7 @@ import {
 import { revalidatePath } from 'next/cache'
 import type { TDSParseResult, SmoothnessUnit } from '@/types/database'
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024
+const MAX_FILE_SIZE = 6 * 1024 * 1024
 
 export async function uploadTDSPdf(
   formData: FormData
@@ -39,7 +39,7 @@ export async function uploadTDSPdf(
   }
 
   if (file.size > MAX_FILE_SIZE) {
-    throw new Error('File size must be less than 10MB')
+    throw new Error('File size must be less than 6MB')
   }
 
   const supabase = await createClient()
@@ -143,9 +143,12 @@ export async function saveTDSProduct(data: TDSProductFormData) {
         spec.tear_cd.unit as TearUnit
       )
     }
-    if (spec.smoothness?.value != null) {
-      dbSpec.smoothness = spec.smoothness.value
-      dbSpec.smoothness_unit = spec.smoothness.unit
+    if (spec.smoothness != null) {
+      dbSpec.smoothness = spec.smoothness
+      dbSpec.smoothness_unit = 'sec'
+    }
+    if (spec.roughness != null) {
+      dbSpec.roughness = spec.roughness
     }
     if (spec.stiffness_md?.value != null) {
       dbSpec.stiffness_md = convertStiffness(
@@ -161,6 +164,9 @@ export async function saveTDSProduct(data: TDSProductFormData) {
     }
     if (spec.brightness !== undefined && spec.brightness !== null) {
       dbSpec.brightness = spec.brightness
+    }
+    if (spec.whiteness !== undefined && spec.whiteness !== null) {
+      dbSpec.whiteness = spec.whiteness
     }
     if (spec.cobb_60 !== undefined && spec.cobb_60 !== null) {
       dbSpec.cobb_60 = spec.cobb_60

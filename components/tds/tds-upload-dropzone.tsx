@@ -48,7 +48,7 @@ export function TDSUploadDropzone({
     onDrop,
     accept: { 'application/pdf': ['.pdf'] },
     maxFiles: 1,
-    maxSize: 10 * 1024 * 1024,
+    maxSize: 6 * 1024 * 1024,
     disabled: disabled || isUploading,
   })
 
@@ -130,7 +130,7 @@ export function TDSUploadDropzone({
                       : 'Drag & drop your TDS PDF here'}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    or click to browse (max 10MB)
+                    or click to browse (max 6MB)
                   </p>
                 </div>
               </>

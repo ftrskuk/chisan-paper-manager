@@ -64,17 +64,12 @@ export const tdsSpecSchema = z.object({
   tensile_cd: valueUnitSchema(['kN/m', 'kgf/15mm', 'N/15mm', 'lb/in'] as const),
   tear_md: valueUnitSchema(['mN', 'gf', 'cN'] as const),
   tear_cd: valueUnitSchema(['mN', 'gf', 'cN'] as const),
-  smoothness: z
-    .object({
-      value: z.number().nullable(),
-      unit: smoothnessUnitSchema.nullable(),
-      method: smoothnessMethodSchema.nullable(),
-    })
-    .nullable()
-    .optional(),
+  smoothness: z.number().nonnegative().nullable().optional(),
+  roughness: z.number().nonnegative().nullable().optional(),
   stiffness_md: valueUnitSchema(['mN·m', 'gf·cm', 'mN·mm'] as const),
   stiffness_cd: valueUnitSchema(['mN·m', 'gf·cm', 'mN·mm'] as const),
   brightness: z.number().min(0).max(100).nullable().optional(),
+  whiteness: z.number().nonnegative().nullable().optional(),
   cobb_60: z.number().nonnegative().nullable().optional(),
   density: z.number().positive().nullable().optional(),
   opacity: z.number().min(0).max(100).nullable().optional(),

@@ -31,9 +31,11 @@ IMPORTANT RULES:
    - Thickness/Caliper: µm, mm, mil, or inch
    - Tensile: kN/m, kgf/15mm, N/15mm, or lb/in
    - Tear: mN, gf, or cN
-   - Smoothness: sec (Bekk), ml/min (Bendtsen), or µm (PPS)
+   - Smoothness: sec (Bekk method only)
+   - Roughness: ml/min (Bendtsen method)
    - Stiffness: mN·m, gf·cm, or mN·mm
    - Brightness, Opacity, Moisture: percentage (0-100)
+   - Whiteness: CIE whiteness value
    - Cobb 60: g/m²
    - Density: g/cm³
 
@@ -57,10 +59,12 @@ Return a JSON object with this exact structure:
       "tensile_cd": { "value": number, "unit": "kN/m" | "kgf/15mm" | "N/15mm" | "lb/in" } | null,
       "tear_md": { "value": number, "unit": "mN" | "gf" | "cN" } | null,
       "tear_cd": { "value": number, "unit": "mN" | "gf" | "cN" } | null,
-      "smoothness": { "value": number, "unit": "sec" | "ml/min" | "µm", "method": "Bekk" | "Bendtsen" | "PPS" } | null,
+      "smoothness": number | null,
+      "roughness": number | null,
       "stiffness_md": { "value": number, "unit": "mN·m" | "gf·cm" | "mN·mm" } | null,
       "stiffness_cd": { "value": number, "unit": "mN·m" | "gf·cm" | "mN·mm" } | null,
       "brightness": number | null,
+      "whiteness": number | null,
       "cobb_60": number | null,
       "density": number | null,
       "opacity": number | null,
@@ -247,21 +251,11 @@ function validateAndNormalize(raw: unknown): TDSParseResult {
         }
       }
 
-      if (spec.smoothness && typeof spec.smoothness === 'object') {
-        const s = spec.smoothness as {
-          value: number
-          unit: string
-          method: string
-        }
-        if (s.value > 0) {
-          // Smoothness has different methods (Bekk, PPS) that are not directly convertible linearly
-          // We keep them as is, but ensure types are correct
-          normalizedSpec.smoothness = {
-            value: s.value,
-            unit: s.unit as SmoothnessUnit,
-            method: s.method as SmoothnessMethod,
-          }
-        }
+      if (typeof spec.smoothness === 'number' && spec.smoothness >= 0) {
+        normalizedSpec.smoothness = spec.smoothness
+      }
+      if (typeof spec.roughness === 'number' && spec.roughness >= 0) {
+        normalizedSpec.roughness = spec.roughness
       }
 
       if (spec.stiffness_md && typeof spec.stiffness_md === 'object') {
@@ -310,6 +304,9 @@ function validateAndNormalize(raw: unknown): TDSParseResult {
 
       if (typeof spec.brightness === 'number' && spec.brightness >= 0) {
         normalizedSpec.brightness = spec.brightness
+      }
+      if (typeof spec.whiteness === 'number' && spec.whiteness >= 0) {
+        normalizedSpec.whiteness = spec.whiteness
       }
       if (typeof spec.cobb_60 === 'number' && spec.cobb_60 >= 0) {
         normalizedSpec.cobb_60 = spec.cobb_60

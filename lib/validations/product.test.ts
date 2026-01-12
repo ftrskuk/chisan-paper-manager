@@ -176,9 +176,11 @@ describe('tdsSpecSchema', () => {
       gsm: 100,
       caliper: { value: 120, unit: 'µm' },
       tensile_md: { value: 5.5, unit: 'kN/m' },
-      smoothness: { value: 20, unit: 'sec', method: 'Bekk' },
+      smoothness: 20,
+      roughness: 150,
       stiffness_md: { value: 10, unit: 'mN·m' },
       brightness: 95,
+      whiteness: 80,
       opacity: 98,
       moisture: 5.5,
       density: 0.8,
@@ -197,16 +199,18 @@ describe('tdsSpecSchema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('validates optional nested objects', () => {
+  it('validates optional numeric fields', () => {
     const spec = {
       gsm: 100,
-      smoothness: { value: 20, unit: 'sec', method: 'Bekk' },
+      smoothness: 20,
+      roughness: 150,
+      whiteness: 80,
     }
     const result = tdsSpecSchema.safeParse(spec)
     expect(result.success).toBe(true)
   })
 
-  it('rejects invalid nested structure', () => {
+  it('rejects invalid gsm type', () => {
     const spec = {
       gsm: 'invalid' as unknown as number,
     }
@@ -214,10 +218,10 @@ describe('tdsSpecSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('rejects invalid enum values', () => {
+  it('rejects negative smoothness', () => {
     const spec = {
       gsm: 100,
-      smoothness: { value: 20, unit: 'invalid', method: 'Bekk' },
+      smoothness: -5,
     }
     const result = tdsSpecSchema.safeParse(spec)
     expect(result.success).toBe(false)

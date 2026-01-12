@@ -89,11 +89,8 @@ export interface TDSParsedSpec {
     value: number | null
     unit: 'mN' | 'gf' | 'cN' | null
   } | null
-  smoothness?: {
-    value: number | null
-    unit: SmoothnessUnit | null
-    method: SmoothnessMethod | null
-  } | null
+  smoothness?: number | null
+  roughness?: number | null
   stiffness_md?: {
     value: number | null
     unit: StiffnessUnit | null
@@ -103,6 +100,7 @@ export interface TDSParsedSpec {
     unit: StiffnessUnit | null
   } | null
   brightness?: number | null
+  whiteness?: number | null
   cobb_60?: number | null
   density?: number | null
   opacity?: number | null
