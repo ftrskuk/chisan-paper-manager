@@ -42,12 +42,20 @@ describe('SpecVariantForm', () => {
     it('renders all spec input fields', () => {
       render(<SpecVariantForm {...defaultProps} />)
 
-      expect(screen.getByLabelText(/GSM/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/Base Weight/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/Caliper/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/Tensile MD/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/Tensile CD/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/Tear MD/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/Tear CD/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/Smoothness/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/Stiffness MD/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/Stiffness CD/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/Brightness/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/Cobb 60/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/Density/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/Opacity/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/Moisture/i)).toBeInTheDocument()
     })
 
     it('shows remove button when showRemove is true', () => {
@@ -87,6 +95,30 @@ describe('SpecVariantForm', () => {
       expect(mockRegister).toHaveBeenCalledWith('specs.1.tear_cd', {
         valueAsNumber: true,
       })
+      expect(mockRegister).toHaveBeenCalledWith('specs.1.smoothness', {
+        valueAsNumber: true,
+      })
+      expect(mockRegister).toHaveBeenCalledWith('specs.1.stiffness_md', {
+        valueAsNumber: true,
+      })
+      expect(mockRegister).toHaveBeenCalledWith('specs.1.stiffness_cd', {
+        valueAsNumber: true,
+      })
+      expect(mockRegister).toHaveBeenCalledWith('specs.1.brightness', {
+        valueAsNumber: true,
+      })
+      expect(mockRegister).toHaveBeenCalledWith('specs.1.cobb_60', {
+        valueAsNumber: true,
+      })
+      expect(mockRegister).toHaveBeenCalledWith('specs.1.density', {
+        valueAsNumber: true,
+      })
+      expect(mockRegister).toHaveBeenCalledWith('specs.1.opacity', {
+        valueAsNumber: true,
+      })
+      expect(mockRegister).toHaveBeenCalledWith('specs.1.moisture', {
+        valueAsNumber: true,
+      })
     })
   })
 
@@ -97,16 +129,6 @@ describe('SpecVariantForm', () => {
       }
       render(<SpecVariantForm {...defaultProps} errors={errors} />)
       expect(screen.getByText('GSM is required')).toBeInTheDocument()
-    })
-
-    it('displays caliper error message', () => {
-      const errors: FieldErrors<ProductFormData> = {
-        specs: [
-          { caliper: { type: 'required', message: 'Caliper is required' } },
-        ],
-      }
-      render(<SpecVariantForm {...defaultProps} errors={errors} />)
-      expect(screen.getByText('Caliper is required')).toBeInTheDocument()
     })
   })
 

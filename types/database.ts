@@ -135,11 +135,19 @@ export interface ProductFormInput {
 
 export interface ProductSpecFormInput {
   gsm: number
-  caliper: number
+  caliper?: number
   tensile_md?: number
   tensile_cd?: number
   tear_md?: number
   tear_cd?: number
+  smoothness?: number
+  stiffness_md?: number
+  stiffness_cd?: number
+  brightness?: number
+  cobb_60?: number
+  density?: number
+  opacity?: number
+  moisture?: number
   extra_specs: Record<string, unknown>
 }
 

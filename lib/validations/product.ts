@@ -9,17 +9,19 @@ export const tearUnitSchema = z.enum(['mN', 'gf', 'cN'])
 // Standard units: caliper=µm, tensile=kN/m, tear=mN
 export const productSpecSchema = z.object({
   gsm: z.number().positive('GSM must be positive'),
-  caliper: z.number().positive('Caliper must be positive'), // µm
-  tensile_md: z
-    .number()
-    .nonnegative('Tensile MD cannot be negative')
-    .optional(), // kN/m
-  tensile_cd: z
-    .number()
-    .nonnegative('Tensile CD cannot be negative')
-    .optional(), // kN/m
-  tear_md: z.number().nonnegative('Tear MD cannot be negative').optional(), // mN
-  tear_cd: z.number().nonnegative('Tear CD cannot be negative').optional(), // mN
+  caliper: z.number().positive('Caliper must be positive').optional(),
+  tensile_md: z.number().nonnegative().optional(),
+  tensile_cd: z.number().nonnegative().optional(),
+  tear_md: z.number().nonnegative().optional(),
+  tear_cd: z.number().nonnegative().optional(),
+  smoothness: z.number().nonnegative().optional(),
+  stiffness_md: z.number().nonnegative().optional(),
+  stiffness_cd: z.number().nonnegative().optional(),
+  brightness: z.number().min(0).max(100).optional(),
+  cobb_60: z.number().nonnegative().optional(),
+  density: z.number().positive().optional(),
+  opacity: z.number().min(0).max(100).optional(),
+  moisture: z.number().min(0).max(100).optional(),
   extra_specs: z.record(z.unknown()),
 })
 
