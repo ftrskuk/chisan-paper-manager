@@ -18,7 +18,12 @@ import {
   type StiffnessUnit,
 } from '@/utils/unit-converters'
 import { revalidatePath } from 'next/cache'
-import type { TDSParseResult, SmoothnessUnit } from '@/types/database'
+import type { TDSParseResult } from '@/types/database'
+import {
+  uploadTdsPdf as uploadTdsPdfToStorage,
+  getSignedDownloadUrl,
+  deleteFile,
+} from '@/lib/storage/storage'
 
 const MAX_FILE_SIZE = 6 * 1024 * 1024
 
@@ -42,28 +47,13 @@ export async function uploadTDSPdf(
     throw new Error('File size must be less than 6MB')
   }
 
-  const supabase = await createClient()
-  const timestamp = Date.now()
-  const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
-  const filePath = `${user.id}/${timestamp}_${safeName}`
-
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
 
-  const { error: uploadError } = await supabase.storage
-    .from('spec-sheets')
-    .upload(filePath, buffer, {
-      contentType: 'application/pdf',
-      upsert: false,
-    })
-
-  if (uploadError) {
-    throw new Error(`Upload failed: ${uploadError.message}`)
-  }
-
+  const result = await uploadTdsPdfToStorage(user.id, file.name, buffer)
   const base64 = buffer.toString('base64')
 
-  return { path: filePath, base64 }
+  return { path: result.key, base64 }
 }
 
 export async function parseTDS(pdfBase64: string): Promise<TDSParseResult> {
@@ -198,26 +188,10 @@ export async function saveTDSProduct(data: TDSProductFormData) {
 }
 
 export async function getStorageUrl(path: string): Promise<string> {
-  const supabase = await createClient()
-
-  const { data } = await supabase.storage
-    .from('spec-sheets')
-    .createSignedUrl(path, 3600)
-
-  if (!data?.signedUrl) {
-    throw new Error('Failed to generate signed URL')
-  }
-
-  return data.signedUrl
+  return getSignedDownloadUrl(path, 3600)
 }
 
 export async function deleteStorageFile(path: string): Promise<void> {
   await requireAdmin()
-  const supabase = await createClient()
-
-  const { error } = await supabase.storage.from('spec-sheets').remove([path])
-
-  if (error) {
-    throw new Error(`Failed to delete file: ${error.message}`)
-  }
+  await deleteFile(path)
 }

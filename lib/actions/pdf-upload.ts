@@ -1,17 +1,14 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
 import { requireAdmin, getUser } from '@/lib/auth'
+import {
+  uploadSourcePdf as uploadSourcePdfToStorage,
+  getSignedDownloadUrl,
+  deleteFile,
+  generateTimestampedFilename,
+} from '@/lib/storage/storage'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
-
-function sanitizeForFilename(str: string): string {
-  return str
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '')
-}
 
 export async function uploadSourcePdf(
   formData: FormData,
@@ -35,51 +32,30 @@ export async function uploadSourcePdf(
     throw new Error('File size must be less than 10MB')
   }
 
-  const supabase = await createClient()
-  const timestamp = Date.now()
-  const safeMill = sanitizeForFilename(millName)
-  const safeProduct = sanitizeForFilename(productName)
-  const filename = `${safeMill}_${safeProduct}_${timestamp}.pdf`
-  const filePath = `source-pdfs/${user.id}/${filename}`
-
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
 
-  const { error: uploadError } = await supabase.storage
-    .from('spec-sheets')
-    .upload(filePath, buffer, {
-      contentType: 'application/pdf',
-      upsert: false,
-    })
+  const result = await uploadSourcePdfToStorage(
+    user.id,
+    millName,
+    productName,
+    buffer
+  )
 
-  if (uploadError) {
-    throw new Error(`Upload failed: ${uploadError.message}`)
-  }
+  const filename = generateTimestampedFilename(millName, productName)
 
-  return { path: filePath, filename }
+  return { path: result.key, filename }
 }
 
 export async function deleteSourcePdf(path: string): Promise<void> {
   await requireAdmin()
-  const supabase = await createClient()
-
-  const { error } = await supabase.storage.from('spec-sheets').remove([path])
-
-  if (error) {
-    console.error('Failed to delete old PDF:', error.message)
+  try {
+    await deleteFile(path)
+  } catch (error) {
+    console.error('Failed to delete old PDF:', error)
   }
 }
 
 export async function getSourcePdfUrl(path: string): Promise<string> {
-  const supabase = await createClient()
-
-  const { data } = await supabase.storage
-    .from('spec-sheets')
-    .createSignedUrl(path, 3600)
-
-  if (!data?.signedUrl) {
-    throw new Error('Failed to generate signed URL')
-  }
-
-  return data.signedUrl
+  return getSignedDownloadUrl(path, 3600)
 }
