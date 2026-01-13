@@ -1,30 +1,50 @@
 'use client'
 
+import { useState, useRef } from 'react'
 import { useProductForm } from './use-product-form'
 import { SpecVariantForm } from './spec-variant-form'
+import { uploadSourcePdf, deleteSourcePdf } from '@/lib/actions/pdf-upload'
 import type { ProductFormData } from '@/lib/validations/product'
 import type { Category } from '@/types/database'
 
+interface PdfInfo {
+  path: string
+  filename: string
+}
+
 interface ProductFormProps {
   categories: Category[]
-  onSubmit: (data: ProductFormData) => Promise<void>
+  onSubmit: (
+    data: ProductFormData,
+    pdfInfo?: PdfInfo | null,
+    clearPdf?: boolean
+  ) => Promise<void>
   defaultValues?: Partial<ProductFormData>
+  existingPdf?: PdfInfo | null
 }
 
 export function ProductForm({
   categories,
   onSubmit,
   defaultValues,
+  existingPdf,
 }: ProductFormProps) {
+  const [pdfFile, setPdfFile] = useState<File | null>(null)
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false)
+  const [pdfError, setPdfError] = useState<string | null>(null)
+  const [clearExistingPdf, setClearExistingPdf] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const {
     form: {
       register,
       formState: { errors },
+      getValues,
     },
     fields,
     isSubmitting,
     extraSpecsPerSpec,
-    submitHandler,
+    submitHandler: originalSubmitHandler,
     actions: {
       handleAddSpec,
       handleRemoveSpec,
@@ -32,10 +52,80 @@ export function ProductForm({
       removeExtraSpec,
       updateExtraSpec,
     },
-  } = useProductForm({ defaultValues, onSubmit })
+  } = useProductForm({
+    defaultValues,
+    onSubmit: async (data) => {
+      let pdfInfo: PdfInfo | null = null
+
+      if (pdfFile) {
+        setIsUploadingPdf(true)
+        setPdfError(null)
+        try {
+          const formData = new FormData()
+          formData.append('file', pdfFile)
+          const result = await uploadSourcePdf(
+            formData,
+            data.mill_name,
+            data.name
+          )
+          pdfInfo = { path: result.path, filename: result.filename }
+
+          if (existingPdf?.path && !clearExistingPdf) {
+            await deleteSourcePdf(existingPdf.path).catch(() => {})
+          }
+        } catch (error) {
+          setPdfError(
+            error instanceof Error ? error.message : 'PDF upload failed'
+          )
+          setIsUploadingPdf(false)
+          throw error
+        }
+        setIsUploadingPdf(false)
+      }
+
+      await onSubmit(data, pdfInfo, clearExistingPdf && !pdfFile)
+    },
+  })
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    setPdfError(null)
+
+    if (!file) {
+      setPdfFile(null)
+      return
+    }
+
+    if (file.type !== 'application/pdf') {
+      setPdfError('Only PDF files are allowed')
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setPdfError('File size must be less than 10MB')
+      return
+    }
+
+    setPdfFile(file)
+    setClearExistingPdf(false)
+  }
+
+  const handleRemovePdf = () => {
+    setPdfFile(null)
+    setClearExistingPdf(true)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const showExistingPdf = existingPdf && !clearExistingPdf && !pdfFile
+  const isBusy = isSubmitting || isUploadingPdf
 
   return (
-    <form onSubmit={submitHandler} className="space-y-8 max-w-5xl mx-auto">
+    <form
+      onSubmit={originalSubmitHandler}
+      className="space-y-8 max-w-5xl mx-auto"
+    >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -98,6 +188,105 @@ export function ProductForm({
         </div>
       </div>
 
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Source TDS (PDF)
+        </label>
+        <div className="space-y-2">
+          {showExistingPdf && (
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <svg
+                className="w-5 h-5 text-red-500 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className="text-sm text-gray-700 flex-1 truncate">
+                {existingPdf.filename}
+              </span>
+              <button
+                type="button"
+                onClick={handleRemovePdf}
+                className="text-sm text-red-600 hover:text-red-800"
+              >
+                Remove
+              </button>
+            </div>
+          )}
+
+          {pdfFile && (
+            <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <svg
+                className="w-5 h-5 text-blue-500 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className="text-sm text-blue-700 flex-1 truncate">
+                {pdfFile.name}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setPdfFile(null)
+                  if (fileInputRef.current) fileInputRef.current.value = ''
+                }}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                Remove
+              </button>
+            </div>
+          )}
+
+          {!showExistingPdf && !pdfFile && (
+            <div className="flex items-center justify-center w-full">
+              <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <svg
+                    className="w-6 h-6 mb-2 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
+                  </svg>
+                  <p className="text-sm text-gray-500">
+                    <span className="font-semibold">Click to upload</span> PDF
+                    (max 10MB)
+                  </p>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept="application/pdf"
+                  onChange={handleFileChange}
+                />
+              </label>
+            </div>
+          )}
+
+          {pdfError && (
+            <p className="text-sm text-red-600 font-medium">{pdfError}</p>
+          )}
+        </div>
+      </div>
+
       <div className="space-y-6">
         <div className="flex items-center justify-between border-b pb-4">
           <h3 className="text-xl font-semibold text-gray-900">
@@ -141,10 +330,10 @@ export function ProductForm({
       <div className="pt-4 sticky bottom-0 bg-white/80 backdrop-blur-sm border-t border-gray-100">
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isBusy}
           className="w-full md:w-auto md:min-w-[200px] float-right py-2.5 px-6 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-600/40"
         >
-          {isSubmitting ? (
+          {isBusy ? (
             <span className="flex items-center justify-center gap-2">
               <svg
                 className="animate-spin h-4 w-4 text-white"
@@ -166,7 +355,7 @@ export function ProductForm({
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 ></path>
               </svg>
-              Saving...
+              {isUploadingPdf ? 'Uploading PDF...' : 'Saving...'}
             </span>
           ) : (
             'Save Product'

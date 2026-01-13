@@ -13,7 +13,15 @@ import { revalidatePath } from 'next/cache'
 import type { ProductFilters } from '@/types/filters'
 import type { ProductSpec } from '@/types/database'
 
-export async function createProduct(data: ProductFormData) {
+interface CreateProductOptions {
+  sourcePdfPath?: string
+  sourcePdfFilename?: string
+}
+
+export async function createProduct(
+  data: ProductFormData,
+  options?: CreateProductOptions
+) {
   await requireAdmin()
   const user = await getUser()
   if (!user) throw new Error('Not authenticated')
@@ -28,6 +36,8 @@ export async function createProduct(data: ProductFormData) {
       name: validated.name,
       category_id: validated.category_id || null,
       created_by: user.id,
+      source_pdf_path: options?.sourcePdfPath || null,
+      source_pdf_filename: options?.sourcePdfFilename || null,
     })
     .select()
     .single()
@@ -51,18 +61,38 @@ export async function createProduct(data: ProductFormData) {
   return product
 }
 
-export async function updateProduct(productId: string, data: ProductFormData) {
+interface UpdateProductOptions {
+  sourcePdfPath?: string
+  sourcePdfFilename?: string
+  clearPdf?: boolean
+}
+
+export async function updateProduct(
+  productId: string,
+  data: ProductFormData,
+  options?: UpdateProductOptions
+) {
   await requireAdmin()
   const validated = productFormSchema.parse(data)
   const supabase = await createClient()
 
+  const updateData: Record<string, unknown> = {
+    mill_name: validated.mill_name,
+    name: validated.name,
+    category_id: validated.category_id || null,
+  }
+
+  if (options?.sourcePdfPath && options?.sourcePdfFilename) {
+    updateData.source_pdf_path = options.sourcePdfPath
+    updateData.source_pdf_filename = options.sourcePdfFilename
+  } else if (options?.clearPdf) {
+    updateData.source_pdf_path = null
+    updateData.source_pdf_filename = null
+  }
+
   const { error: productError } = await supabase
     .from('products')
-    .update({
-      mill_name: validated.mill_name,
-      name: validated.name,
-      category_id: validated.category_id || null,
-    })
+    .update(updateData)
     .eq('id', productId)
 
   if (productError) {

@@ -15,6 +15,8 @@ interface ProductWithRelations {
   name: string
   category_id: string | null
   file_url: string | null
+  source_pdf_path: string | null
+  source_pdf_filename: string | null
   created_by: string | null
   created_at: string
   updated_at: string

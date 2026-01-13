@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { ProductForm } from '@/components/products/product-form'
 import { updateProduct } from '@/lib/actions/product'
+import { deleteSourcePdf } from '@/lib/actions/pdf-upload'
 import type { ProductWithSpecs, Category } from '@/types/database'
 import type { ProductFormData } from '@/lib/validations/product'
 
@@ -35,9 +36,26 @@ export function EditProductClient({
     })),
   }
 
-  const handleSubmit = async (data: ProductFormData) => {
+  const existingPdf =
+    product.source_pdf_path && product.source_pdf_filename
+      ? { path: product.source_pdf_path, filename: product.source_pdf_filename }
+      : null
+
+  const handleSubmit = async (
+    data: ProductFormData,
+    pdfInfo?: { path: string; filename: string } | null,
+    clearPdf?: boolean
+  ) => {
     try {
-      await updateProduct(product.id, data)
+      if (clearPdf && product.source_pdf_path) {
+        await deleteSourcePdf(product.source_pdf_path).catch(() => {})
+      }
+
+      await updateProduct(product.id, data, {
+        sourcePdfPath: pdfInfo?.path,
+        sourcePdfFilename: pdfInfo?.filename,
+        clearPdf,
+      })
       router.push(`/products/${product.id}`)
     } catch (error) {
       console.error(error)
@@ -50,6 +68,7 @@ export function EditProductClient({
       categories={categories}
       onSubmit={handleSubmit}
       defaultValues={defaultValues}
+      existingPdf={existingPdf}
     />
   )
 }

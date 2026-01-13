@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { getProduct } from '@/lib/actions/product'
+import { getSourcePdfUrl } from '@/lib/actions/pdf-upload'
 import { getProfile, isAdmin } from '@/lib/auth'
-import { ChevronLeft, Pencil } from 'lucide-react'
+import { ChevronLeft, Pencil, Download } from 'lucide-react'
 import type { ProductSpec } from '@/types/database'
 
 export default async function ProductPage({
@@ -13,6 +14,15 @@ export default async function ProductPage({
   const [product, profile] = await Promise.all([getProduct(id), getProfile()])
 
   const admin = isAdmin(profile)
+
+  let pdfUrl: string | null = null
+  if (product.source_pdf_path) {
+    try {
+      pdfUrl = await getSourcePdfUrl(product.source_pdf_path)
+    } catch {
+      pdfUrl = null
+    }
+  }
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4">
@@ -101,6 +111,31 @@ export default async function ProductPage({
           </table>
         </div>
       </div>
+
+      {pdfUrl && product.source_pdf_filename && (
+        <div className="mt-8 bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h2 className="text-lg font-semibold text-gray-800">
+              Source Document
+            </h2>
+          </div>
+          <div className="px-6 py-4">
+            <a
+              href={pdfUrl}
+              download={product.source_pdf_filename}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors shadow-sm"
+            >
+              <Download size={16} />
+              Download Original TDS
+            </a>
+            <p className="mt-2 text-sm text-gray-500">
+              {product.source_pdf_filename}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="mt-8 flex justify-center opacity-20">
         <div className="w-16 h-1 bg-gray-900 rounded-full"></div>

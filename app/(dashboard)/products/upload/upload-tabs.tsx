@@ -27,9 +27,15 @@ export function UploadTabs({ categories }: UploadTabsProps) {
     router.replace(`${pathname}?${params.toString()}`)
   }
 
-  async function handleManualSubmit(data: ProductFormData) {
+  async function handleManualSubmit(
+    data: ProductFormData,
+    pdfInfo?: { path: string; filename: string } | null
+  ) {
     try {
-      const product = await createProduct(data)
+      const product = await createProduct(data, {
+        sourcePdfPath: pdfInfo?.path,
+        sourcePdfFilename: pdfInfo?.filename,
+      })
       router.push(`/products/${product.id}`)
     } catch (error) {
       console.error('Failed to create product:', error)
