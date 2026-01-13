@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { deleteProduct } from '@/lib/actions/product'
 import { SpecDetailSidebar } from './spec-detail-sidebar'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import type { ProductWithSpecs, Category, ProductSpec } from '@/types/database'
 
 interface ProductWithRelations extends ProductWithSpecs {
@@ -187,10 +188,16 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
 
               return (
                 <Fragment key={product.id}>
-                  <tr className="border-b hover:bg-gray-50">
+                  <tr
+                    className="border-b hover:bg-gray-50 cursor-pointer"
+                    onClick={() => toggleExpand(product.id)}
+                  >
                     <td className="p-3">
                       <button
-                        onClick={() => toggleExpand(product.id)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleExpand(product.id)
+                        }}
                         className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded"
                         title="Select GSM to compare"
                       >
@@ -202,6 +209,7 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                       <Link
                         href={`/products/${product.id}`}
                         className="text-blue-600 hover:underline"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {product.name}
                       </Link>
@@ -219,28 +227,33 @@ export function ProductsTable({ products, isAdmin }: ProductsTableProps) {
                     </td>
                     <td className="p-3">
                       <div className="flex gap-2">
-                        <Link
-                          href={`/products/${product.id}`}
-                          className="text-sm text-gray-600 hover:text-gray-900"
-                        >
-                          View
-                        </Link>
                         {isAdmin && (
                           <>
                             <Link
                               href={`/products/${product.id}/edit`}
                               className="text-sm text-blue-600 hover:text-blue-800"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               Edit
                             </Link>
                             <button
-                              onClick={() => handleDelete(product.id)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDelete(product.id)
+                              }}
                               disabled={deleting === product.id}
-                              className="text-sm text-red-600 hover:text-red-800 disabled:text-gray-400"
+                              className="inline-flex items-center gap-2 text-sm text-red-600 hover:text-red-800 disabled:text-gray-400"
                             >
-                              {deleting === product.id
-                                ? 'Deleting...'
-                                : 'Delete'}
+                              {deleting === product.id ? (
+                                <>
+                                  <span className="grayscale">
+                                    <LoadingSpinner size="sm" />
+                                  </span>
+                                  Deleting...
+                                </>
+                              ) : (
+                                'Delete'
+                              )}
                             </button>
                           </>
                         )}
