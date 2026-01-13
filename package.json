@@ -14,7 +14,11 @@
     "test:coverage": "vitest --coverage",
     "types:supabase": "supabase gen types typescript --local > types/database.types.ts",
     "db:reset": "supabase db reset",
-    "db:push": "supabase db push"
+    "db:push": "supabase db push",
+    "r2:test": "tsx scripts/test-r2-connection.ts",
+    "r2:migrate": "tsx scripts/migrate-pdfs-to-r2.ts",
+    "r2:migrate:dry": "tsx scripts/migrate-pdfs-to-r2.ts --dry-run",
+    "r2:test:upload": "tsx scripts/test-pdf-upload-flow.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
@@ -61,6 +65,7 @@
     "@vitest/coverage-v8": "^2.0.5",
     "@vitest/ui": "^2.0.5",
     "autoprefixer": "^10.4.20",
+    "dotenv": "^17.2.3",
     "eslint": "^8.57.0",
     "eslint-config-next": "14.2.15",
     "eslint-config-prettier": "^9.1.0",
@@ -69,6 +74,7 @@
     "prettier": "^3.3.3",
     "supabase": "^1.191.3",
     "tailwindcss": "^3.4.11",
+    "tsx": "^4.21.0",
     "typescript": "^5.6.2",
     "vite-tsconfig-paths": "^5.0.1",
     "vitest": "^2.0.5"
